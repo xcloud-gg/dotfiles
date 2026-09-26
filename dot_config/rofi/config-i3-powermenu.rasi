@@ -1,0 +1,17 @@
+/* Themed powermenu — reuses the rice's existing colors.rasi */
+@import "~/.config/rofi/colors.rasi"
+
+configuration {
+    modi: "dmenu";
+    font: "Fira Sans 12";
+    show-icons: false;
+}
+
+window {
+    width: 240px;
+    border-radius: 12px;
+}
+
+listview {
+    lines: 5;
+}

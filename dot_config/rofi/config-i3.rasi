@@ -1,0 +1,23 @@
+/* Self-contained rofi config for the i3/X11 rice — the original config.rasi
+ * (kept as-is from the Hyprland side) pulls in xcloud-app-generated snippets
+ * (wallpaper-derived accent, dynamic border radius) that don't exist here. */
+@theme "~/.config/rofi/colors.rasi"
+
+configuration {
+    modi:                "drun,run,window,filebrowser";
+    font:                "Fira Sans 11";
+    show-icons:          true;
+    display-drun:        " ";
+    display-run:         " ";
+    display-window:      " ";
+    display-filebrowser: " ";
+    drun-display-format: "{name}";
+    hover-select:        false;
+    click-to-exit:       true;
+    kb-cancel:           "Escape,MousePrimary";
+}
+
+window {
+    width: 40%;
+    border-radius: 12px;
+}

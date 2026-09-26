@@ -1,0 +1,14 @@
+# Atuin shell history -- local-only by design.
+#
+# auto_sync and update_check are disabled deliberately: this machine's aiOS
+# project runs with a zero-external-egress posture, and shell history often
+# contains secrets (tokens, connection strings, etc.) that should never
+# leave the machine. Flip these on only if you've thought through that
+# tradeoff for the machine you're deploying to.
+auto_sync = false
+update_check = false
+
+# Redact commands that look like they contain tokens/passwords/API keys
+# before they're ever written to history -- same secrets rationale as
+# disabling auto_sync above, applied to local storage too.
+secrets_filter = true

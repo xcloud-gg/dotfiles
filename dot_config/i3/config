@@ -1,0 +1,140 @@
+# xCloud i3 config — Baldr/Debian X11 rice
+# Same palette/fonts as the xcloud Hyprland rice (matugen green-on-black):
+# background #0c1609 · foreground #d9e7d0 · accent #68e054 · urgent #00ff00 · error #ffb4ab
+# fonts: JetBrainsMono Nerd Font (mono/icons) · Fira Sans (UI)
+
+set $mod Mod4
+font pango:Fira Sans 10
+
+set $bg      #0c1609
+set $bg-alt  #182214
+set $fg      #d9e7d0
+set $accent  #68e054
+set $urgent  #00ff00
+set $error   #ffb4ab
+set $border  #3b4b35
+
+# class                 border   bg       text    indicator  child_border
+client.focused           $accent  $bg-alt  $fg     $accent    $accent
+client.focused_inactive  $border  $bg      $fg     $border    $border
+client.unfocused         $border  $bg      $fg     $border    $border
+client.urgent            $urgent  $urgent  $bg     $urgent    $urgent
+client.placeholder       $border  $bg      $fg     $border    $border
+client.background        $bg
+
+# ---- terminal / launcher ----
+set $term kitty
+set $menu rofi -show drun -config ~/.config/rofi/config-i3.rasi
+
+bindsym $mod+Return exec $term
+bindsym $mod+d exec $menu
+bindsym $mod+shift+d exec rofi -show run -config ~/.config/rofi/config-i3.rasi
+
+# ---- window management ----
+floating_modifier $mod
+bindsym $mod+shift+q kill
+bindsym $mod+f fullscreen toggle
+bindsym $mod+shift+space floating toggle
+bindsym $mod+space focus mode_toggle
+
+bindsym $mod+h split h
+bindsym $mod+v split v
+bindsym $mod+r mode "resize"
+
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+
+bindsym $mod+shift+Left move left
+bindsym $mod+shift+Down move down
+bindsym $mod+shift+Up move up
+bindsym $mod+shift+Right move right
+
+# layouts
+bindsym $mod+s layout stacking
+bindsym $mod+w layout tabbed
+bindsym $mod+e layout toggle split
+bindsym $mod+a focus parent
+
+mode "resize" {
+    bindsym Left  resize shrink width 10 px or 10 ppt
+    bindsym Down  resize grow height 10 px or 10 ppt
+    bindsym Up    resize shrink height 10 px or 10 ppt
+    bindsym Right resize grow width 10 px or 10 ppt
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+# ---- workspaces ----
+set $ws1 "1"
+set $ws2 "2"
+set $ws3 "3"
+set $ws4 "4"
+set $ws5 "5"
+set $ws6 "6"
+set $ws7 "7"
+set $ws8 "8"
+set $ws9 "9"
+set $ws10 "10"
+
+bindsym $mod+1 workspace number $ws1
+bindsym $mod+2 workspace number $ws2
+bindsym $mod+3 workspace number $ws3
+bindsym $mod+4 workspace number $ws4
+bindsym $mod+5 workspace number $ws5
+bindsym $mod+6 workspace number $ws6
+bindsym $mod+7 workspace number $ws7
+bindsym $mod+8 workspace number $ws8
+bindsym $mod+9 workspace number $ws9
+bindsym $mod+0 workspace number $ws10
+
+bindsym $mod+shift+1 move container to workspace number $ws1
+bindsym $mod+shift+2 move container to workspace number $ws2
+bindsym $mod+shift+3 move container to workspace number $ws3
+bindsym $mod+shift+4 move container to workspace number $ws4
+bindsym $mod+shift+5 move container to workspace number $ws5
+bindsym $mod+shift+6 move container to workspace number $ws6
+bindsym $mod+shift+7 move container to workspace number $ws7
+bindsym $mod+shift+8 move container to workspace number $ws8
+bindsym $mod+shift+9 move container to workspace number $ws9
+bindsym $mod+shift+0 move container to workspace number $ws10
+
+# ---- session ----
+bindsym $mod+shift+c reload
+bindsym $mod+shift+r restart
+bindsym $mod+shift+e exec "~/.config/i3/scripts/rofi-powermenu.sh"
+bindsym $mod+l exec "~/.config/i3/scripts/lock.sh"
+
+# ---- media / screenshots ----
+bindsym XF86AudioRaiseVolume exec pactl set-sink-volume @DEFAULT_SINK@ +5%
+bindsym XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -5%
+bindsym XF86AudioMute exec pactl set-sink-mute @DEFAULT_SINK@ toggle
+bindsym XF86MonBrightnessUp exec brightnessctl set +5%
+bindsym XF86MonBrightnessDown exec brightnessctl set 5%-
+bindsym Print exec maim ~/Pictures/$(date +%Y-%m-%d-%H%M%S).png
+
+# ---- gaps / borders ----
+gaps inner 8
+gaps outer 2
+default_border pixel 2
+default_floating_border pixel 2
+smart_borders on
+
+# ---- bar (polybar owns the actual bar; keep i3bar off) ----
+bar {
+    mode invisible
+}
+
+# ---- autostart ----
+exec_always --no-startup-id ~/.config/polybar/launch.sh
+exec --no-startup-id picom --config ~/.config/picom/picom.conf
+exec --no-startup-id dunst
+# No wallpaper image ships with this rice yet — solid background matching the
+# theme; `nitrogen` is installed too, so replace with `nitrogen --restore`
+# once you've set a real wallpaper with it.
+exec --no-startup-id xsetroot -solid "#0c1609"
+exec --no-startup-id xsettingsd
+exec --no-startup-id numlockx on
+exec --no-startup-id nm-applet
+exec --no-startup-id xss-lock -- ~/.config/i3/scripts/lock.sh

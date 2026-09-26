@@ -1,0 +1,30 @@
+# -----------------------------------------------------
+# INIT
+# -----------------------------------------------------
+
+# -----------------------------------------------------
+# Exports
+# -----------------------------------------------------
+export EDITOR=nvim
+
+# Idempotent PATH prepend/append: 00-init can run more than once per shell
+# session (nested subshells, `bash -c` calls from Quickshell widgets, etc.),
+# and an unconditional append here grows PATH by these entries every time,
+# eventually hitting the kernel's ARG_MAX and breaking new process spawns.
+_xcloud_path_prepend() {
+    case ":$PATH:" in
+        *":$1:"*) ;;
+        *) PATH="$1:$PATH" ;;
+    esac
+}
+_xcloud_path_append() {
+    case ":$PATH:" in
+        *":$1:"*) ;;
+        *) PATH="$PATH:$1" ;;
+    esac
+}
+_xcloud_path_prepend "/usr/lib/ccache/bin"
+_xcloud_path_append "$HOME/.cargo/bin"
+_xcloud_path_append "$HOME/.local/bin"
+export PATH
+unset -f _xcloud_path_prepend _xcloud_path_append

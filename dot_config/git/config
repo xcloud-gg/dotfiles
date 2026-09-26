@@ -1,0 +1,17 @@
+# git-delta -- better diffs.
+#
+# No [user] section here on purpose: this is the shared XDG git config
+# (~/.config/git/config), and identity (name/email) stays in each person's
+# own ~/.gitconfig instead of being pulled in via this repo.
+[core]
+	pager = delta
+
+[interactive]
+	diffFilter = delta --color-only
+
+[delta]
+	navigate = true
+	line-numbers = true
+
+[merge]
+	conflictstyle = diff3

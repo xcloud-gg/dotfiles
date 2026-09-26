@@ -1,0 +1,45 @@
+# -----------------------------------------------------
+# AUTOSTART
+# -----------------------------------------------------
+
+# The 'finder' command (Fuzzy Finder)
+finder() {
+    # Run the script and capture the result
+    local result=$($HOME/.config/xcloud/bin/xcloud-finder)
+
+    # Check if the script told us to CD
+    if [[ "$result" == TYPE_DIR:* ]]; then
+        local target_dir="${result#TYPE_DIR:}"
+        cd "$target_dir" && ls
+    elif [[ "$result" == TYPE_FILE:* ]]; then
+    # Check if we have a file
+        ${EDITOR:-nano} "${result#TYPE_FILE:}"
+    else
+    # Return an error
+        echo "Could not read $result" >&2
+        return 1
+    fi
+}
+
+# The 'y' command (Yazi, cd on exit)
+y() {
+    local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+    yazi "$@" --cwd-file="$tmp"
+    if cwd="$(cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+        cd -- "$cwd"
+    fi
+    rm -f -- "$tmp"
+}
+
+# -----------------------------------------------------
+# Fastfetch
+# -----------------------------------------------------
+if [[ $(tty) == *"pts"* ]]; then
+    if [ ! -f $HOME/.config/xcloud/settings/hide-fastfetch ]; then
+        # Disable terminal auto-wrap (DECAWM) for the run so a line that's
+        # wider than a narrow/tiled terminal (e.g. the cpu line's clock
+        # speed) clips at the right edge instead of wrapping and breaking
+        # the box-drawing layout onto a second row.
+        printf '\e[?7l'; fastfetch; printf '\e[?7h'
+    fi
+fi

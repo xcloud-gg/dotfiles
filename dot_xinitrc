@@ -1,0 +1,8 @@
+#!/bin/sh
+# Used when logging in via startx/a display manager set to Xsession;
+# autostart (picom, dunst, polybar, etc.) lives in ~/.config/i3/config instead
+# of here, so it also runs correctly under a display manager.
+userresources=$HOME/.Xresources
+[ -f "$userresources" ] && xrdb -merge "$userresources"
+
+exec i3
