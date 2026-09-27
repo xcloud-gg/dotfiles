@@ -2,3 +2,5 @@
 README.md
 DEBIAN-PACKAGES.md
 installer
+install.sh
+bootstrap

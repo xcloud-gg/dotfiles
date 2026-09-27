@@ -56,6 +56,23 @@ on every new shell.
   needs a live user session the installer's chroot doesn't have. Deliberately
   *not* the system-wide daemon + `docker` group — see the script's comments.
 
+## One-line install
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/xcloud-gg/dotfiles/main/install.sh) [MODE] [--ref REF] [OPTIONS]
+```
+
+| Mode | For | What it does |
+|---|---|---|
+| `dotfiles` (default) | any Debian 13 / Arch desktop user | installs chezmoi, clones this repo, `chezmoi init --apply` (re-run to update) |
+| `operator` | the operator workstation — loki now, thor once built | gh + Claude Code; `~/xcloud/xcloud-docs` and `~/xcloud/xcloud-state`, kept current by `xcloud-sync` (docs `main` only across commits signed by your pinned key); `xcloud-approve` on `PATH`; the operator Claude workspace `~/xcloud/operator` whose SessionStart hook loads the build state (revisions, proposals waiting for your signature, every agent's phase, hand-offs to you). Never applies the i3 rice, never touches private keys |
+| `agent-host` | an agent host **not** installed from the live ISO | fetches the kit from a signed `kit-*` tag of `xc0-sh/xcloud-docs`, verifies it against the signer fingerprint you type, runs `bootstrap-host.sh`, optionally registers the host's deploy keys; hosts installed from `installer/live/` get this at first boot instead |
+
+Everything runs from `main()` at the end of each script, so a truncated download runs nothing. For anything
+that matters pin a commit: `…/dotfiles/<commit>/install.sh` plus `--ref <commit>`. `install.sh`, `bootstrap/`
+and the installers are in `.chezmoiignore`. Proposed changes to `xcloud-docs` arrive unsigned on
+`proposals/<topic>` branches; only you make them real, with `xcloud-approve <sha>` (signed with your key).
+
 ## Package list / installer
 
 See `DEBIAN-PACKAGES.md` for the apt package set, and `installer/` for the actual
