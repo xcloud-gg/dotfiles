@@ -153,6 +153,51 @@ umount "$BTRFS_MNT"
 echo "=== Btrfs reshape complete ==="
 
 # ---------------------------------------------------------------------------
+# nvme0n1 — the second disk (2TB games/local storage), wiped and set up
+# fresh (confirmed with the user; it's separate from the OS disk above and
+# was never touched by partman — partman-auto/disk only lists nvme1n1).
+# Plain Btrfs, no LUKS: full-disk encryption costs real throughput on a
+# drive that's mostly game installs/large files, for no real security
+# benefit over the encrypted OS disk it sits beside. Two subvolumes rather
+# than one partition-per-purpose, so both can share the same pool of space
+# instead of being split by a size guess up front.
+# ---------------------------------------------------------------------------
+DATA_DISK=/dev/nvme0n1
+if [ -b "$DATA_DISK" ]; then
+    echo "--- wiping and partitioning $DATA_DISK (games/data) ---"
+    wipefs -af "$DATA_DISK"
+    sfdisk "$DATA_DISK" <<SFDISK
+label: gpt
+,
+SFDISK
+    udevadm settle
+    DATA_PART="${DATA_DISK}p1"
+    [ -b "$DATA_PART" ] || DATA_PART="${DATA_DISK}1"
+
+    echo "--- formatting $DATA_PART as btrfs, creating @games/@data ---"
+    mkfs.btrfs -f -L games-data "$DATA_PART"
+    mount "$DATA_PART" "$BTRFS_MNT"
+    btrfs subvolume create "$BTRFS_MNT/@games"
+    btrfs subvolume create "$BTRFS_MNT/@data"
+    umount "$BTRFS_MNT"
+
+    echo "--- mounting at /mnt/games and /mnt/data, owned by marius ---"
+    DATA_OPTS="compress=zstd:3,noatime"
+    mkdir -p /target/mnt/games /target/mnt/data
+    mount -o "subvol=@games,$DATA_OPTS" "$DATA_PART" /target/mnt/games
+    mount -o "subvol=@data,$DATA_OPTS" "$DATA_PART" /target/mnt/data
+    data_uuid=$(blkid -s UUID -o value "$DATA_PART")
+    {
+        echo "UUID=$data_uuid /mnt/games btrfs subvol=@games,$DATA_OPTS 0 2"
+        echo "UUID=$data_uuid /mnt/data btrfs subvol=@data,$DATA_OPTS 0 2"
+    } >> /target/etc/fstab
+    in-target chown marius:marius /mnt/games /mnt/data
+    echo "=== games/data disk ready ==="
+else
+    echo "--- $DATA_DISK not present, skipping games/data disk setup ---"
+fi
+
+# ---------------------------------------------------------------------------
 # Docker — rootless. aios-thor-agent-prompt.md's invariant 12 requires the
 # desktop user (marius) stay out of every container-runtime group, so this
 # does NOT add him to `docker` and does NOT enable the system-wide daemon.
