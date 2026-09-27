@@ -1,0 +1,18 @@
+[Settings]
+language = en
+folder = {{ if stat (joinPath .chezmoi.homeDir "Pictures/wallpaper") }}{{ .chezmoi.homeDir }}/Pictures/wallpaper{{ else }}/usr/share/backgrounds/xcloud{{ end }}
+wallpaper = /usr/share/backgrounds/xcloud/forest2.jpg
+backend = feh
+monitors = All
+fill = fill
+sort = namerev
+color = ffffff
+subfolders = True
+show_hidden = False
+show_gifs_only = False
+post_command = ~/.config/xcloud/scripts/xcloud-wallpaper "$wallpaper" --skip > /dev/null 2>&1
+number_of_columns = 3
+use_xdg_state = False
+show_path_in_tooltip = True
+all_subfolders = False
+zen_mode = False

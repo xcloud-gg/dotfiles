@@ -1,0 +1,14 @@
+# Sourced (by /bin/sh) by Debian's Xsession, which the display manager runs
+# for the i3 session -- the X11 counterpart of the Hyprland rice's
+# environment.lua / hyprctl setcursor.
+export QT_QPA_PLATFORMTHEME=qt6ct
+export XCURSOR_THEME=Bibata-Modern-Ice
+export XCURSOR_SIZE=24
+
+# Quickshell resolves icons through Qt's icon theme, not the GTK setting;
+# QS_ICON_THEME is what it reads. Same as on Hyprland: take the GTK icon
+# theme (kora), falling back to Papirus-Dark if that theme isn't installed.
+QS_ICON_THEME=$(sed -n 's/^[[:space:]]*gtk-icon-theme-name[[:space:]]*=[[:space:]]*//p' \
+    "$HOME/.config/gtk-3.0/settings.ini" 2>/dev/null | head -n 1)
+[ -n "$QS_ICON_THEME" ] && [ -d "/usr/share/icons/$QS_ICON_THEME" ] || QS_ICON_THEME=Papirus-Dark
+export QS_ICON_THEME
