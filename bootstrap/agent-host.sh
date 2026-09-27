@@ -30,7 +30,7 @@ while [[ $# -gt 0 ]]; do
     --tag) TAG=${2:?}; shift 2 ;;
     --claude-version) CV=${2:?}; shift 2 ;;
     --no-deploy-keys) DEPLOY=0; shift ;;
-    *) sed -n '2,20p' "$0"; exit 2 ;;
+    *) sed -n '2,18p' "$0"; exit 2 ;;
   esac
 done
 [[ $EUID -eq 0 ]] || die "run as root (install.sh re-runs this mode through sudo)"

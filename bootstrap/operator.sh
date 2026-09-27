@@ -24,7 +24,7 @@ while [[ $# -gt 0 ]]; do
     --signer-key) SKEY=${2:?}; shift 2 ;;
     --fingerprint) SFPR=${2:?}; shift 2 ;;
     --claude-version) CV=${2:?}; shift 2 ;;
-    *) sed -n '2,17p' "$0"; exit 2 ;;
+    *) sed -n '2,15p' "$0"; exit 2 ;;
   esac
 done
 [[ $EUID -ne 0 ]] || die "run the operator mode as your own user (it uses sudo for packages only)"
