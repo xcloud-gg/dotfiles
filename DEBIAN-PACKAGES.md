@@ -7,7 +7,7 @@ and `installer/late.sh` install before applying this repo with `chezmoi`.
 ```
 xorg i3-wm i3lock i3status
 polybar picom dunst rofi feh imagemagick
-lightdm lightdm-gtk-greeter
+sddm qml6-module-qtmultimedia qml6-module-qtquick-virtualkeyboard qt6-virtualkeyboard-plugin
 xss-lock x11-xserver-utils xdg-utils xsettingsd
 lxpolkit gammastep blueman xdg-desktop-portal-gtk libnotify-bin
 nautilus loupe gnome-text-editor gnome-calculator
@@ -15,6 +15,10 @@ network-manager network-manager-gnome
 pulseaudio pulseaudio-utils pavucontrol playerctl
 brightnessctl maim xclip
 ```
+Display manager: SDDM with the ml4w theme (as on the Arch rice; the live ISO
+ships it in `/usr/share/sddm/themes/ml4w`, selected by
+`/etc/sddm.conf.d/10-xcloud.conf`). SDDM runs Debian's Xsession for the i3
+session, which sources `~/.xsessionrc` (session environment).
 
 ## Quickshell shell (bar, power menu, launcher, calendar, OSD, sidebar)
 `quickshell` itself is not in Debian: it is the xcloud-built
