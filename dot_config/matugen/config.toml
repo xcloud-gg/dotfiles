@@ -1,0 +1,80 @@
+# matugen config for the X11/i3 rice -- port of the Arch/Hyprland rice's
+# matugen/.config/matugen/config.toml. Run by ~/.config/xcloud/scripts/xcloud-wallpaper
+# (and so by waypaper's post_command) as
+#   matugen image <wallpaper> -t scheme-content -m dark --prefer=saturation
+# The rendered outputs of forest2.jpg are also committed to this repo as the
+# defaults, so a fresh install has the right palette before any wallpaper change.
+#
+# Dropped from the Arch config (Wayland-only or not shipped here): hyprland,
+# hyprland-lua, waybar, swaync, wlogout, quickshell_overview, sequences,
+# pywalfox, xcloud_dotfiles_settings and the single-colour primary/secondary/
+# onsurface/onprimary files (nothing on this side reads them).
+# Added for X11: i3, i3lock, dunst, polybar.
+
+[config]
+
+# Read by the Quickshell shell (CustomTheme/Theme.qml) and nvim (matugen.nvim)
+[templates.colorsjson]
+input_path = '~/.config/matugen/templates/colors.json'
+output_path = '~/.config/xcloud/colors/colors.json'
+post_hook = 'qs ipc call theme-manager reload >/dev/null 2>&1 || true'
+
+[templates.kitty]
+input_path = '~/.config/matugen/templates/kitty-colors.conf'
+output_path = '~/.config/kitty/colors-matugen.conf'
+post_hook = 'pkill -SIGUSR1 -x kitty || true'
+
+[templates.tmux]
+input_path = '~/.config/matugen/templates/tmux-colors.conf'
+output_path = '~/.config/tmux/colors-matugen.conf'
+post_hook = 'tmux list-sessions >/dev/null 2>&1 && tmux source-file ~/.tmux.conf || true'
+
+[templates.btop]
+input_path = '~/.config/matugen/templates/btop.theme'
+output_path = '~/.config/btop/themes/matugen.theme'
+
+[templates.rofi]
+input_path = '~/.config/matugen/templates/rofi-colors.rasi'
+output_path = '~/.config/rofi/colors.rasi'
+
+[templates.gtk3]
+input_path = '~/.config/matugen/templates/gtk-colors.css'
+output_path = '~/.config/gtk-3.0/colors.css'
+
+[templates.gtk4]
+input_path = '~/.config/matugen/templates/gtk-colors.css'
+output_path = '~/.config/gtk-4.0/colors.css'
+post_hook = '~/.config/matugen/post-hook-scripts/gtk-themes-reload.sh'
+
+[templates.qt6ct]
+input_path = '~/.config/matugen/templates/qt6ct-colors.conf'
+output_path = '~/.config/qt6ct/colors/matugen.conf'
+
+# i3 window borders: ~/.config/i3/config `include`s this. `i3-msg reload`
+# also re-runs the config's exec_always lines, i.e. quickshell.sh restarts the
+# Quickshell shell (which then starts with the new colors.json anyway).
+[templates.i3]
+input_path = '~/.config/matugen/templates/i3-colors.conf'
+output_path = '~/.config/i3/colors.conf'
+post_hook = 'i3-msg -q reload >/dev/null 2>&1 || true'
+
+# Sourced by ~/.config/i3/scripts/lock.sh (i3lock / i3lock-color colours)
+[templates.i3lock]
+input_path = '~/.config/matugen/templates/i3lock-colors.sh'
+output_path = '~/.config/i3/lock-colors.sh'
+
+# dunst drop-in: read after ~/.config/dunst/dunstrc, overrides its colours
+[templates.dunst]
+input_path = '~/.config/matugen/templates/dunst-colors.conf'
+output_path = '~/.config/dunst/dunstrc.d/50-matugen.conf'
+post_hook = 'dunstctl reload >/dev/null 2>&1 || true'
+
+# polybar (fallback bar): ~/.config/polybar/config.ini include-file's this
+[templates.polybar]
+input_path = '~/.config/matugen/templates/polybar-colors.ini'
+output_path = '~/.config/polybar/colors.ini'
+
+[templates.ohmyposh]
+input_path = '~/.config/matugen/templates/ohmyposh-colors.json'
+output_path = '~/.config/ohmyposh/colors.json'
+post_hook = "jq --slurpfile palette ~/.config/ohmyposh/colors.json '. + $palette[0]' ~/.config/ohmyposh/EDM115-newline.omp.json > ~/.config/ohmyposh/.EDM115-newline.omp.json.new && mv ~/.config/ohmyposh/.EDM115-newline.omp.json.new ~/.config/ohmyposh/EDM115-newline.omp.json"

@@ -1,6 +1,6 @@
 {
     "palette": {
-      "color0": "#101418",
+      "color0": "{{colors.background.default.hex}}",
       "color1": "",
       "color2": "",
       "color3": "",
@@ -10,11 +10,11 @@
       "color7": "",
       "color8": "",
       "color9": "",
-      "color10": "#9cd0ff",
+      "color10": "{{colors.primary.default.hex}}",
       "color11": "",
       "color12": "",
-      "color13": "#001d31",
+      "color13": "{{colors.on_primary_fixed.default.hex}}",
       "color14": "",
-      "color15": "#e0e2e8"
+      "color15": "{{colors.on_surface.default.hex}}"
     }
   }

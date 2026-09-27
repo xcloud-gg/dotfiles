@@ -21,7 +21,8 @@
     horizontal_padding = 12
     text_icon_padding = 8
     frame_width = 2
-    frame_color = "#68e054"
+    # colours (frame_color, per-urgency background/foreground/frame_color)
+    # come from the matugen-generated dunstrc.d/50-matugen.conf drop-in
     separator_color = frame
     sort = yes
     idle_threshold = 120
@@ -60,18 +61,10 @@
     mouse_right_click = close_all
 
 [urgency_low]
-    background = "#0c1609"
-    foreground = "#d9e7d0"
     timeout = 5
 
 [urgency_normal]
-    background = "#182214"
-    foreground = "#d9e7d0"
-    frame_color = "#68e054"
     timeout = 8
 
 [urgency_critical]
-    background = "#182214"
-    foreground = "#ffb4ab"
-    frame_color = "#ffb4ab"
     timeout = 0
