@@ -217,6 +217,28 @@ Singleton {
         applySettings(persistBarFlag("autohide", on))
     }
 
+    // --- BAR WINDOWS (X11) ---
+    // Every live StatusbarWindow instance. On X11 the OSD is a PopupWindow,
+    // which needs a parent window to anchor to; barWindow is the first
+    // visible bar (null while the bar is disabled -- the OSD then stays
+    // hidden).
+    property var bars: []
+    readonly property var barWindow: {
+        for (let i = 0; i < bars.length; i++)
+            if (bars[i].visible)
+                return bars[i]
+        return null
+    }
+
+    function registerBar(w): void {
+        if (root.bars.indexOf(w) < 0)
+            root.bars = root.bars.concat([w])
+    }
+
+    function unregisterBar(w): void {
+        root.bars = root.bars.filter(b => b !== w)
+    }
+
     // --- PER-MONITOR ROUTING ---
     // focus/expand/collapse are inherently per-instance (each monitor's bar
     // owns its own keyboard grab and expand/collapse state), so instead of

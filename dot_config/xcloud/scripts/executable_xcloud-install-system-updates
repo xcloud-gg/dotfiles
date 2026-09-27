@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Debian port of the Hyprland rice's xcloud-install-system-updates, opened in
+# a terminal by ~/.config/xcloud/settings/installupdates.sh (the Quickshell
+# updates module's click action).
+clear
+echo ":: Updates"
+echo
+read -r -p ":: Start the system update now? [y/N] " answer
+case "$answer" in
+    [yY]*) ;;
+    *) echo ":: Update canceled."; exit 0 ;;
+esac
+
+echo ":: Update started..."
+sudo apt update && sudo apt full-upgrade
+
+echo
+qs ipc call updates refresh >/dev/null 2>&1
+echo ":: Update complete! Press [ENTER] to close."
+read -r

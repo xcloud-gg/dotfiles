@@ -1,6 +1,4 @@
 import Quickshell
-import Quickshell.Wayland
-import Quickshell.Hyprland
 import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
@@ -8,66 +6,38 @@ import QtQuick.Controls
 import QtQuick.Effects
 import qs.CustomTheme
 
-// P2.1: native application launcher, opt-in via
-// ~/.config/xcloud/settings/launcher (value "quickshell") -- rofi stays the
-// default. Modeled on PowerApp/PowerWindow.qml (single instance, IPC toggle,
-// HyprlandFocusGrab + Escape to dismiss) rather than the statusbar's
-// per-monitor Variants pattern, since a launcher is one overlay, not
-// something that needs to exist on every screen at once. The app list comes
-// from Quickshell's own DesktopEntries singleton (same one DockApp already
-// uses for icon/name lookup), not a custom .desktop parser.
-PanelWindow {
+// Native application launcher, opt-in via ~/.config/xcloud/settings/launcher
+// (value "quickshell") -- rofi stays the default; see
+// ~/.config/i3/scripts/launcher.sh. Single instance, IPC toggle. The app list
+// comes from Quickshell's own DesktopEntries singleton.
+// X11/i3: an OverlayWindow (i3 floating window on the focused output, closes
+// on focus loss) instead of a layer-shell overlay + HyprlandFocusGrab.
+OverlayWindow {
     id: root
+    title: "xcloud-launcher"
 
-    // Follows Hyprland's focused monitor live, so opening the launcher (any
-    // trigger -- keybind, bar button, waybar button) always shows it on
-    // whichever screen the user is actually looking at, mirroring
-    // DockApp/DockWindow.qml's screen-matching pattern (that one pins to a
-    // fixed monitor id; this one tracks focus instead, since unlike the dock
-    // there's no single "primary" screen a launcher should live on).
-    readonly property var focusedScreen: {
-        const screens = Quickshell.screens
-        if (!screens || screens.length === 0)
-            return null
-        const mon = Hyprland.focusedMonitor
-        if (!mon)
-            return screens[0]
-        for (let s = 0; s < screens.length; s++)
-            if (screens[s].name === mon.name)
-                return screens[s]
-        return screens[0]
+    // Horizontally centered, 18% down the focused output (same spot as the
+    // Hyprland version's top margin).
+    placement: function (out, w, h) {
+        return { "x": out.x + (out.width - w) / 2, "y": out.y + Math.round(out.height * 0.18) }
     }
-    screen: focusedScreen
 
-    WlrLayershell.layer: WlrLayer.Overlay
-    exclusionMode: WlrLayershell.Ignore
-    color: "transparent"
-
-    anchors {
-        top: true
-    }
-    // qmllint disable unresolved-type
-    // PanelWindow's "margins" grouped property isn't in qmllint's bundled
-    // QtQuick type info, so it always reports as unresolved - not a bug.
-    margins {
-        top: Math.round((screen ? screen.height : 900) * 0.18)
-    }
-    // qmllint enable unresolved-type
-
-    property bool isOpen: false
     property int selectedIndex: 0
 
-    // Keep the window mapped while the panel exists (no slide animation here
-    // unlike Power/Statusbar -- a launcher wants to be instantly there/gone,
-    // not draw attention sliding in).
-    visible: isOpen
+    // No slide animation here unlike Power/Calendar -- a launcher wants to be
+    // instantly there/gone, not draw attention sliding in.
 
     onIsOpenChanged: {
         if (isOpen) {
             searchField.text = ""
             root.selectedIndex = 0
-            searchField.forceActiveFocus()
         }
+    }
+
+    // The window only gets the keyboard once i3 has focused it.
+    onHasFocusChanged: {
+        if (hasFocus)
+            searchField.forceActiveFocus()
     }
 
     IpcHandler {
@@ -75,12 +45,6 @@ PanelWindow {
         function toggle(): void { root.isOpen = !root.isOpen }
         function open(): void { root.isOpen = true }
         function close(): void { root.isOpen = false }
-    }
-
-    HyprlandFocusGrab {
-        windows: [root]
-        active: root.isOpen
-        onCleared: root.isOpen = false
     }
 
     Shortcut {
@@ -137,7 +101,7 @@ PanelWindow {
     implicitWidth: 480
     implicitHeight: Math.min(520, list.contentHeight + searchRow.implicitHeight + 60)
 
-    RectangularShadow {
+    Shadow {
         anchors.fill: panelBg
         radius: panelBg.radius
         blur: 15

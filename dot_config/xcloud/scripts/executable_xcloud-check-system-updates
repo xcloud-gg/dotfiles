@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Debian port of the Hyprland rice's xcloud-check-system-updates: prints the
+# pending-update count as {"text": "N", ...} for the Quickshell updates module
+# (StatusbarApp/UpdatesState.qml), and nothing when there are none.
+#
+# Reads apt's cached package lists -- refreshing them needs root, which the
+# apt-daily.timer (and unattended-upgrades) already do in the background.
+
+updates=$(apt list --upgradable 2>/dev/null | grep -c 'upgradable from')
+
+threshhold_yellow=25
+threshhold_red=100
+css_class="green"
+if [ "$updates" -gt $threshhold_yellow ]; then
+    css_class="yellow"
+fi
+if [ "$updates" -gt $threshhold_red ]; then
+    css_class="red"
+fi
+
+if [ "$updates" -gt 0 ]; then
+    printf '{"text": "%s", "alt": "%s", "tooltip": "Click to update your system", "class": "%s"}' "$updates" "$updates" "$css_class"
+fi

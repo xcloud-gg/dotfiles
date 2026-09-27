@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# i3/X11 port of the Hyprland rice's xcloud-power (used by the Quickshell
+# power menu, PowerApp/PowerWindow.qml). Same options; hyprlock -> the i3
+# lock script, hyprctl -> i3-msg.
+
+# Background daemons with no i3 window of their own. Left running across a
+# logout/reboot/poweroff they hold sockets / D-Bus names the next session's
+# copies then collide with. Quickshell is started as `quickshell` by the i3
+# config, while `qs ...` (a symlink to it) is what IPC calls run as.
+_terminate_background_daemons() {
+    echo ":: Stopping background daemons"
+    pkill -x quickshell 2>/dev/null
+    pkill -x qs 2>/dev/null
+    pkill -x polybar 2>/dev/null
+    pkill -x dunst 2>/dev/null
+    pkill -x xss-lock 2>/dev/null
+    pkill -x picom 2>/dev/null
+    return 0
+}
+
+# Ask every i3 window to close (WM_DELETE_WINDOW, like clicking its close
+# button), sweep the headless daemons above (the Quickshell bar is an i3
+# window too, so it has to go before the wait), then give the rest up to 5s.
+# Only the teardown-class actions (logout/reboot/poweroff) call this.
+_terminate_clients() {
+    local timeout=5 start
+    i3-msg -q '[class=".*"] kill' 2>/dev/null
+    _terminate_background_daemons
+    start=$(date +%s)
+    while [ "$(i3-msg -t get_tree 2>/dev/null | grep -c '"window":[0-9]')" -gt 0 ]; do
+        if [ $(( $(date +%s) - start )) -ge "$timeout" ]; then
+            echo ":: Timeout reached."
+            break
+        fi
+        sleep 0.5
+    done
+}
+
+lock_action()      { "$HOME/.config/i3/scripts/lock.sh"; }
+suspend_action()   { systemctl suspend; }
+hibernate_action() { systemctl hibernate; }
+logout_action()    { _terminate_clients; sleep 0.5; i3-msg -q exit; }
+reboot_action()    { _terminate_clients; sleep 0.5; systemctl reboot; }
+poweroff_action()  { _terminate_clients; sleep 0.5; systemctl poweroff; }
+
+show_help() {
+    cat << HELP
+Usage: $(basename "$0") [OPTION]
+
+A capsule wrapper for system power management features.
+
+Options:
+  -l, --lock        Lock the screen (~/.config/i3/scripts/lock.sh)
+  -s, --suspend     Suspend the system via systemctl
+  -b, --hibernate   Hibernate the system via systemctl
+  -e, --logout      Gracefully exit the i3 session
+  -r, --reboot      Reboot the machine
+  -p, --poweroff    Power off the machine completely
+  -h, --help        Display this help menu
+HELP
+}
+
+case "$1" in
+    -l|--lock)      lock_action ;;
+    -s|--suspend)   suspend_action ;;
+    -b|--hibernate) hibernate_action ;;
+    -e|--logout)    logout_action ;;
+    -r|--reboot)    reboot_action ;;
+    -p|--poweroff)  poweroff_action ;;
+    -h|--help|"")   show_help ;;
+    *)
+        echo "Error: Unknown option '$1'" >&2
+        show_help
+        exit 1
+        ;;
+esac

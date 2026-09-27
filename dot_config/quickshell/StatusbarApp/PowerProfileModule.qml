@@ -1,5 +1,4 @@
 import Quickshell
-import Quickshell.Hyprland
 import Quickshell.Services.UPower
 import QtQuick
 import QtQuick.Effects
@@ -98,43 +97,56 @@ Rectangle {
     // ==========================================
     // SWITCH POPUP
     // ==========================================
-    // Anchored just below the icon. grabFocus lets a click outside dismiss it.
+    // Anchored just below the icon. On X11 a PopupWindow gets no keyboard and
+    // no click-outside dismissal (see shell.qml), so instead of the Hyprland
+    // focus grab it closes once the pointer has left it (after a short grace
+    // period), on a second click on the icon, or after choosing a profile.
     PopupWindow {
         id: popup
         anchor.item: profileRoot
         anchor.edges: Edges.Bottom
         anchor.gravity: Edges.Bottom
         anchor.margins.top: 10
-        // Center the popup under the icon.
-        anchor.rect.x: profileRoot.width / 2 - popup.width / 2
+        // Anchor to the whole icon so Edges.Bottom is its bottom-center and
+        // the Bottom gravity centers the popup under it. (Setting only
+        // rect.x leaves a zero-size rect at the icon's top edge, which on X11
+        // put the popup over the bar, shifted left by half its width.)
+        anchor.rect.x: 0
+        anchor.rect.y: 0
+        anchor.rect.width: profileRoot.width
+        anchor.rect.height: profileRoot.height
 
         visible: profileRoot.menuOpen
 
-        // Grab input while open so a click anywhere outside the popup dismisses
-        // it — the same primitive the status bar itself uses.
-        HyprlandFocusGrab {
-            windows: [popup]
-            active: profileRoot.menuOpen
-            onCleared: profileRoot.menuOpen = false
+        HoverHandler {
+            id: popupHover
+            onHoveredChanged: {
+                if (popupHover.hovered) {
+                    leaveTimer.stop()
+                } else {
+                    leaveTimer.interval = 600
+                    leaveTimer.restart()
+                }
+            }
+        }
+
+        Timer {
+            id: leaveTimer
+            interval: 600
+            onTriggered: profileRoot.menuOpen = false
         }
 
         implicitWidth: 220
         implicitHeight: menuColumn.implicitHeight + 16
         color: "transparent"
 
-        // Take keyboard focus while open so Escape closes the menu (the popup
-        // is opened via keyboard Return as well as by mouse). forceActiveFocus
-        // on show because the popup surface is only created once visible.
-        FocusScope {
-            id: keyScope
-            anchors.fill: parent
-            focus: true
-            Keys.onEscapePressed: profileRoot.menuOpen = false
-        }
-
+        // Opened but never entered (e.g. the pointer went straight back to
+        // the bar): close after a while anyway.
         onVisibleChanged: {
-            if (visible)
-                keyScope.forceActiveFocus()
+            if (visible) {
+                leaveTimer.interval = 3000
+                leaveTimer.restart()
+            }
         }
 
         // Card background, matching the sidebar's context menus: flat

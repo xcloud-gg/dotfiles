@@ -1,40 +1,37 @@
 import Quickshell
-import Quickshell.Wayland
 import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
 import qs.CustomTheme
+import qs.StatusbarApp
 
 // Native volume/mic/brightness on-screen-display. Driven entirely by IPC
 // ("qs ipc call osd showVolume|showMic|showBrightness") from the XF86
-// media-key binds in hypr/conf/keybindings/default.lua, which run the real
-// wpctl/brightnessctl command first and then notify this window -- this
+// media-key binds in ~/.config/i3/config, which run the real
+// pactl/brightnessctl command first and then notify this window -- this
 // window itself only reads back the resulting value to render, it never
 // changes volume/brightness/mute state.
-PanelWindow {
+//
+// X11/i3: a non-grabbing PopupWindow (an override-redirect tooltip window
+// that i3 does not manage and that never takes focus), anchored to the bar
+// and placed bottom-center, 90px above the screen edge. It needs a visible
+// bar to anchor to; with the bar disabled the OSD stays hidden.
+PopupWindow {
     id: root
 
-    WlrLayershell.layer: WlrLayer.Overlay
-    exclusionMode: WlrLayershell.Ignore
+    readonly property var bar: StatusbarSettings.barWindow
+
+    anchor.window: bar
+    anchor.rect.x: bar ? Math.round((bar.width - implicitWidth) / 2) : 0
+    anchor.rect.y: bar && bar.screen ? bar.screen.height - 90 - implicitHeight : 0
 
     implicitWidth: 280
     implicitHeight: 64
     color: "transparent"
 
-    anchors {
-        bottom: true
-    }
-    // qmllint disable unresolved-type
-    // PanelWindow's "margins" grouped property isn't in qmllint's bundled
-    // QtQuick type info, so it always reports as unresolved - not a bug.
-    margins {
-        bottom: 90
-    }
-    // qmllint enable unresolved-type
-
     property bool showWindow: false
-    visible: showWindow
+    visible: showWindow && bar !== null
 
     // "volume" | "mic" | "brightness"
     property string kind: "volume"
@@ -68,14 +65,13 @@ PanelWindow {
         }
     }
 
-    // Same wpctl/brightnessctl parsing already used by the sidebar's
-    // volume/brightness sliders -- kept identical so the two never disagree.
+    // pactl instead of wpctl (works with PulseAudio and pipewire-pulse) --
+    // same parsing as StatusbarApp/AudioState.qml.
     Process {
         id: volumeProc
-        command: ["bash", "-c",
-            "out=$(wpctl get-volume @DEFAULT_AUDIO_SINK@); " +
-            "echo \"$out\" | awk '{print int($2 * 100)}'; " +
-            "echo \"$out\" | grep -q MUTED && echo MUTED || echo UNMUTED"]
+        command: ["sh", "-c",
+            "pactl get-sink-volume @DEFAULT_SINK@ 2>/dev/null | grep -o '[0-9]*%' | head -n1 | tr -d '%'; " +
+            "pactl get-sink-mute @DEFAULT_SINK@ 2>/dev/null | grep -q yes && echo MUTED || echo UNMUTED"]
         stdout: StdioCollector {
             onStreamFinished: {
                 let lines = this.text.trim().split("\n")
@@ -89,7 +85,7 @@ PanelWindow {
 
     Process {
         id: micProc
-        command: ["bash", "-c", "wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | grep -q MUTED && echo MUTED || echo UNMUTED"]
+        command: ["sh", "-c", "pactl get-source-mute @DEFAULT_SOURCE@ 2>/dev/null | grep -q yes && echo MUTED || echo UNMUTED"]
         stdout: StdioCollector {
             onStreamFinished: {
                 root.muted = this.text.trim() === "MUTED"
@@ -114,7 +110,7 @@ PanelWindow {
         anchors.fill: parent
         anchors.margins: 10
 
-        RectangularShadow {
+        Shadow {
             id: shadow
             anchors.fill: bgRect
             radius: bgRect.radius

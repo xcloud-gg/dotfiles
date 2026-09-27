@@ -25,8 +25,9 @@ client.background        $bg
 # ---- keybindings ----
 # Mirrors the Hyprland rice (hypr/conf/keybindings/default.lua): same combos,
 # nearest i3/X11 action. "HYPR-ONLY" = no equivalent here yet (kept as a
-# comment so the combo stays reserved). `qs ipc ...` lines are for a future
-# Quickshell bar replacing polybar.
+# comment so the combo stays reserved). The bar/popups are the Quickshell
+# shell (~/.config/quickshell), driven through `qs ipc call ...` like on
+# Hyprland.
 # Differences from i3 defaults (re-homed so Hyprland's layout wins):
 #   focus mode_toggle  $mod+space       -> $mod+shift+space
 #   kill               $mod+shift+q     -> $mod+q
@@ -50,7 +51,9 @@ bindsym $mod+b exec zen
 bindsym $mod+e exec rofi -show filebrowser -config ~/.config/rofi/config-i3.rasi
 # HYPR-ONLY SUPER+CTRL+E emoji picker (Emote flatpak; no picker installed)
 # HYPR-ONLY SUPER+C calculator (gnome-calculator; not installed)
-bindsym $mod+space exec $menu
+# SUPER+SPACE: same launcher script as Hyprland -- rofi by default, the
+# Quickshell launcher when ~/.config/xcloud/settings/launcher says "quickshell"
+bindsym $mod+space exec --no-startup-id $s/launcher.sh
 bindsym $mod+d exec $menu
 bindsym $mod+shift+d exec rofi -show run -config ~/.config/rofi/config-i3.rasi
 
@@ -148,8 +151,8 @@ bindsym $mod+shift+c reload
 bindsym $mod+shift+r restart
 bindsym $mod+ctrl+l exec --no-startup-id $s/lock.sh
 bindsym $mod+l exec --no-startup-id $s/lock.sh
-# qs ipc call power toggle
-bindsym $mod+ctrl+p exec --no-startup-id $s/rofi-powermenu.sh
+bindsym $mod+ctrl+p exec --no-startup-id qs ipc call power toggle
+# i3's usual exit combo keeps the rofi power menu as a fallback
 bindsym $mod+shift+e exec --no-startup-id $s/rofi-powermenu.sh
 bindsym $mod+ctrl+k exec --no-startup-id $s/keybindings.sh
 # qs -p ~/.config/quickshell/overview ipc call overview toggle
@@ -166,16 +169,20 @@ bindsym --release $mod+Mod1+s exec --no-startup-id $s/screenshot.sh --instant-ar
 # ---- desktop / bar ----
 # HYPR-ONLY SUPER+SHIFT+W random wallpaper; SUPER+ALT+W wallpaper automation
 bindsym $mod+ctrl+w exec nitrogen
-bindsym $mod+shift+b exec --no-startup-id ~/.config/polybar/launch.sh
-bindsym $mod+ctrl+b exec --no-startup-id polybar-msg cmd toggle
-# HYPR-ONLY SUPER+ALT+B statusbar autohide
+# SUPER+SHIFT+B restarts the whole Quickshell shell (same script as autostart)
+bindsym $mod+shift+b exec --no-startup-id $s/quickshell.sh
+bindsym $mod+ctrl+b exec --no-startup-id qs ipc call statusbar toggle
+# HYPR-ONLY SUPER+ALT+B statusbar autohide (an i3 dock always reserves its
+# full height, so a bar that floats over windows can't exist here)
 # HYPR-ONLY SUPER+CTRL+D / SUPER+ALT+D dock toggle / autohide (no dock on i3)
 # HYPR-ONLY SUPER+SHIFT+A toggle animations; SUPER+ALT+G game mode
 # HYPR-ONLY SUPER+CTRL+T bar theme switcher; SUPER+SHIFT+M light/dark toggle; CTRL+ALT+T theme picker
 # HYPR-ONLY SUPER+SHIFT+H night light (hyprsunset; no redshift installed)
-# qs ipc call sidebar toggle        -> SUPER+CTRL+S
-# qs ipc call calendar toggle       -> SUPER+CTRL+C
-# qs ipc call statusbar focus       -> SUPER+ALT+SPACE
+bindsym $mod+ctrl+s exec --no-startup-id qs ipc call sidebar toggle
+bindsym $mod+ctrl+c exec --no-startup-id qs ipc call calendar toggle
+# Hyprland: expand the bar + keyboard navigation. i3 never gives a dock the
+# keyboard, so here it only toggles the expanded pill.
+bindsym $mod+Mod1+space exec --no-startup-id qs ipc call statusbar focus
 
 # ---- clipboard / notes ----
 # SUPER+V clipboard history: copyq (clipmenu is also installed for minimal
@@ -185,12 +192,13 @@ bindsym $mod+n exec --no-startup-id sh -c 'mkdir -p ~/.docs && exec kitty --clas
 bindsym $mod+shift+n exec --no-startup-id $s/quicknote.sh
 
 # ---- media keys (i3lock grabs the keyboard, so these don't work while locked) ----
-bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +5%
-bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -5%
-bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle
-bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle
-bindsym XF86MonBrightnessUp exec --no-startup-id brightnessctl -e4 -n2 set 5%+
-bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl -e4 -n2 set 5%-
+# Each runs the real command, then shows the Quickshell OSD (as on Hyprland).
+bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +5% && qs ipc call osd showVolume
+bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -5% && qs ipc call osd showVolume
+bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle && qs ipc call osd showVolume
+bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle && qs ipc call osd showMic
+bindsym XF86MonBrightnessUp exec --no-startup-id brightnessctl -e4 -n2 set 5%+ && qs ipc call osd showBrightness
+bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl -e4 -n2 set 5%- && qs ipc call osd showBrightness
 bindsym XF86AudioNext exec --no-startup-id playerctl next
 bindsym XF86AudioPause exec --no-startup-id playerctl play-pause
 bindsym XF86AudioPlay exec --no-startup-id playerctl play-pause
@@ -203,13 +211,24 @@ default_border pixel 2
 default_floating_border pixel 2
 smart_borders on
 
-# ---- bar (polybar owns the actual bar; keep i3bar off) ----
+# ---- bar (the Quickshell shell owns the actual bar; keep i3bar off) ----
+# polybar's config (~/.config/polybar) is still shipped but no longer started;
+# to go back, swap the quickshell.sh exec_always below for
+#   exec_always --no-startup-id ~/.config/polybar/launch.sh
 bar {
     mode invisible
 }
 
+# ---- Quickshell overlays ----
+# The shell's Power/Calendar/Launcher/Sidebar windows are plain X11 windows
+# with these fixed titles; they float borderless on every workspace and place
+# themselves (see ~/.config/quickshell/CustomTheme/OverlayWindow.qml).
+for_window [title="^xcloud-(power|calendar|launcher|sidebar)$"] floating enable, border pixel 0, sticky enable
+
 # ---- autostart ----
-exec_always --no-startup-id ~/.config/polybar/launch.sh
+# Quickshell shell: status bar + power menu/calendar/launcher/sidebar/OSD.
+# exec_always + `qs kill` in the script: an i3 restart restarts the shell.
+exec_always --no-startup-id $s/quickshell.sh
 exec --no-startup-id picom --config ~/.config/picom/picom.conf
 exec --no-startup-id dunst
 # No wallpaper image ships with this rice yet — solid background matching the
@@ -218,6 +237,8 @@ exec --no-startup-id dunst
 exec --no-startup-id xsetroot -solid "#0c1609"
 exec --no-startup-id xsettingsd
 exec --no-startup-id numlockx on
-exec --no-startup-id nm-applet
+# --indicator: StatusNotifierItem instead of an XEmbed icon -- the Quickshell
+# tray only hosts SNI items (XEmbed-only tray icons won't show up)
+exec --no-startup-id nm-applet --indicator
 exec --no-startup-id copyq --start-server
 exec --no-startup-id xss-lock -- ~/.config/i3/scripts/lock.sh

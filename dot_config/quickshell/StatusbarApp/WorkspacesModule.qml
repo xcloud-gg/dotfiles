@@ -1,9 +1,11 @@
-import Quickshell.Hyprland
+import Quickshell.I3
 import QtQuick
 import QtQuick.Layouts
 import qs.CustomTheme
 
-// Hyprland workspace switcher.
+// i3 workspace switcher. Workspaces are identified by their number: an
+// I3Workspace's `id` is i3's container id, not the workspace number, and
+// named workspaces without a number (number -1) are not shown.
 RowLayout {
     id: wsRoot
     spacing: 6
@@ -29,22 +31,22 @@ RowLayout {
     // extends to cover the highest-numbered workspace that currently exists.
     readonly property var workspaceIds: {
         let maxId = Math.max(1, wsRoot.minWorkspaces)
-        const list = Hyprland.workspaces.values
+        const list = I3.workspaces.values
         for (let i = 0; i < list.length; i++)
-            if (list[i].id > maxId)
-                maxId = list[i].id
+            if (list[i].number > maxId)
+                maxId = list[i].number
         let ids = []
         for (let id = 1; id <= maxId; id++)
             ids.push(id)
         return ids
     }
 
-    // The live Hyprland workspace for an id, or null when it is empty (Hyprland
-    // only tracks workspaces that hold windows or are focused).
+    // The live i3 workspace for a number, or null when it is empty (i3 only
+    // keeps workspaces that hold windows or are visible on an output).
     function workspaceById(id: int): var {
-        const list = Hyprland.workspaces.values
+        const list = I3.workspaces.values
         for (let i = 0; i < list.length; i++)
-            if (list[i].id === id)
+            if (list[i].number === id)
                 return list[i]
         return null
     }
@@ -63,19 +65,17 @@ RowLayout {
             property bool focused: false
 
             // Whether this workspace is the currently focused one.
-            readonly property bool isActive: Hyprland.focusedWorkspace
-                && Hyprland.focusedWorkspace.id === ws.modelData
-            // Whether the workspace currently holds windows (exists in Hyprland).
+            readonly property bool isActive: I3.focusedWorkspace !== null
+                && I3.focusedWorkspace.number === ws.modelData
+            // Whether the workspace currently exists in i3 (holds windows or
+            // is shown on an output).
             readonly property bool occupied: wsRoot.workspaceById(ws.modelData) !== null
 
             // Run this workspace's action (mouse click or keyboard Return).
-            // Hyprland with Lua dispatchers ignores the plain "workspace N"
-            // string, so branch on usingLua the same way the overview does.
+            // Dispatched by number rather than via I3Workspace.activate() so
+            // empty workspaces (no I3Workspace object yet) work too.
             function activate(): void {
-                if (Hyprland.usingLua)
-                    Hyprland.dispatch("hl.dsp.focus({workspace = '" + ws.modelData + "'})")
-                else
-                    Hyprland.dispatch("workspace " + ws.modelData)
+                I3.dispatch("workspace number " + ws.modelData)
             }
 
             implicitWidth: 26

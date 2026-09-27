@@ -1,36 +1,24 @@
 import Quickshell
-import Quickshell.Wayland
-import Quickshell.Hyprland // <-- Added native Hyprland integration
 import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
 import qs.CustomTheme
 
-PanelWindow {
+// Power menu: a vertical pill that slides in from the right edge of the
+// focused output. X11/i3: an OverlayWindow (i3 floating window, closes on
+// focus loss) instead of a layer-shell overlay; the slide is animated inside
+// the window rather than via the panel margin.
+OverlayWindow {
     id: root
-
-    // --- 1. OVERLAY & WAYLAND FIXES ---
-    WlrLayershell.layer: WlrLayer.Overlay
-    exclusionMode: WlrLayershell.Ignore
+    title: "xcloud-power"
 
     implicitWidth: panelBg.implicitWidth + 40
     implicitHeight: panelBg.implicitHeight + 40
-    color: "transparent"
 
-    anchors {
-        right: true
-    }
-
-    // --- CLICK OUTSIDE TO CLOSE (Native Hyprland) ---
-    HyprlandFocusGrab {
-        windows: [root]
-        active: root.isOpen
-        onCleared: {
-            if (root.isOpen) {
-                root.isOpen = false
-            }
-        }
+    // Flush with the right edge, vertically centered.
+    placement: function (out, w, h) {
+        return { "x": out.x + out.width - w, "y": out.y + (out.height - h) / 2 }
     }
 
     // --- HANDLE ESCAPE SHORTCUT ---
@@ -43,16 +31,19 @@ PanelWindow {
         }
     }
 
-    // --- 2. ANIMATION LOGIC (FIXED) ---
-    property bool isOpen: false
+    // --- 2. ANIMATION LOGIC ---
     property int selectedIndex: -1
     property int buttonCount: 5
 
     onIsOpenChanged: {
-        if (isOpen) {
+        if (isOpen)
             selectedIndex = -1
+    }
+
+    // The window only gets the keyboard once i3 has focused it.
+    onHasFocusChanged: {
+        if (hasFocus)
             panelBg.forceActiveFocus()
-        }
     }
 
     function activateSelected() {
@@ -69,22 +60,15 @@ PanelWindow {
         }
     }
 
-    // Keep the window mapped to the screen while the animation is playing
-    visible: isOpen || slideAnim.running
+    // Keep the window mapped while the slide-out animation is playing
+    keepMapped: slideAnim.running
 
-    // qmllint disable unresolved-type
-    // PanelWindow's "margins" grouped property isn't in qmllint's bundled
-    // QtQuick type info, so it always reports as unresolved - not a bug.
-    margins {
-        right: root.currentMargin
-    }
-    // qmllint enable unresolved-type
+    // Horizontal offset of the pill inside the window: 0 when open, pushed
+    // past the window's right edge when closed.
+    property real slideOffset: isOpen ? 0 : implicitWidth
 
-    // Ternary operator: If open, set to 20. If closed, set to -150.
-    property real currentMargin: isOpen ? 0 : -170
-
-    // This automatically animates currentMargin whenever it changes!
-    Behavior on currentMargin {
+    // This automatically animates slideOffset whenever it changes!
+    Behavior on slideOffset {
         NumberAnimation {
             id: slideAnim
             duration: 350
@@ -112,6 +96,7 @@ PanelWindow {
         implicitWidth: 80
         implicitHeight: buttonLayout.implicitHeight + 40
         anchors.centerIn: parent
+        anchors.horizontalCenterOffset: root.slideOffset
 
         focus: true
 
@@ -130,7 +115,7 @@ PanelWindow {
         Keys.onReturnPressed: root.activateSelected()
         Keys.onEnterPressed: root.activateSelected()
 
-        RectangularShadow {
+        Shadow {
             id: shadow
             anchors.fill: mainBgRect
             radius: mainBgRect.radius

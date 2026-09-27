@@ -1,1 +1,3 @@
 singleton Theme 1.0 Theme.qml
+Shadow 1.0 Shadow.qml
+OverlayWindow 1.0 OverlayWindow.qml

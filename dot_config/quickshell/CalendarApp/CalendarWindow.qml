@@ -1,6 +1,4 @@
 import Quickshell
-import Quickshell.Wayland
-import Quickshell.Hyprland
 import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
@@ -8,31 +6,21 @@ import QtQuick.Controls
 import QtQuick.Effects
 import qs.CustomTheme
 
-PanelWindow {
+// Month calendar that drops down below the bar, horizontally centered.
+// X11/i3: an OverlayWindow (i3 floating window, closes on focus loss) instead
+// of a layer-shell overlay; the slide is animated inside the window rather
+// than via the panel margin.
+OverlayWindow {
     id: root
-    
-    // --- WAYLAND CONFIGURATION ---
-    WlrLayershell.layer: WlrLayer.Overlay
-    exclusionMode: WlrLayershell.Ignore
-    
+    title: "xcloud-calendar"
+
     implicitWidth: 380
-    implicitHeight: 380 
-    color: "transparent"
+    implicitHeight: 380
 
-    // Anchored to the top, horizontally centered (no left/right anchor).
-    anchors {
-        top: true
-    }
-
-    // --- CLICK OUTSIDE TO CLOSE (Native Hyprland) ---
-    HyprlandFocusGrab {
-        windows: [root]
-        active: root.isOpen && root.showWindow // <-- Updated this line
-        onCleared: {
-            if (root.isOpen) {
-                root.isOpen = false
-            }
-        }
+    // Horizontally centered, just below the bar (the Hyprland version sat
+    // at a 67px top margin under a 52px reserved band; the i3 dock is 60px).
+    placement: function (out, w, h) {
+        return { "x": out.x + (out.width - w) / 2, "y": out.y + 55 }
     }
 
     // --- ESCAPE KEY LISTENER ---
@@ -45,55 +33,35 @@ PanelWindow {
         }
     }
 
-    // --- ANIMATION LOGIC (Vertical Slide + Wayland Fix) ---
-    property bool isOpen: false
-    
-    // Guard variable to prevent Wayland from unmapping the window too early
-    property bool showWindow: false
-    visible: showWindow
-    
-    // Map the window immediately when opened
+    // --- ANIMATION LOGIC (Vertical Slide) ---
     onIsOpenChanged: {
         if (isOpen) {
-            showWindow = true
-            
             // Auto-refresh "Today" if the date changed while Quickshell was running
             let now = new Date();
             if (now.getDate() !== todayDate || now.getMonth() !== todayMonth) {
                 todayDate = now.getDate()
                 todayMonth = now.getMonth()
                 todayYear = now.getFullYear()
-                
+
                 currentMonth = todayMonth
                 currentYear = todayYear
                 updateCalendar(currentYear, currentMonth)
             }
         }
     }
-    
-    // Animate between your specific 87px top margin and off-screen (-800)
-    property real currentTopMargin: isOpen ? 67 : -820 
 
-    // qmllint disable unresolved-type
-    // PanelWindow's "margins" grouped property isn't in qmllint's bundled
-    // QtQuick type info, so it always reports as unresolved - not a bug.
-    margins {
-        top: root.currentTopMargin
-    }
-    // qmllint enable unresolved-type
+    // Keep the window mapped until the hide animation has finished.
+    keepMapped: slideAnim.running
 
-    Behavior on currentTopMargin {
+    // Vertical offset of the panel inside the window: 0 when open, slid up
+    // out of the window when closed.
+    property real slideOffset: isOpen ? 0 : -implicitHeight
+
+    Behavior on slideOffset {
         NumberAnimation {
             id: slideAnim
             duration: 350
-            easing.type: Easing.OutQuint 
-            
-            // Unmap the window ONLY after the hide animation completely finishes
-            onRunningChanged: {
-                if (!running && !root.isOpen) {
-                    root.showWindow = false
-                }
-            }
+            easing.type: Easing.OutQuint
         }
     }
 
@@ -238,8 +206,10 @@ PanelWindow {
     Item {
         anchors.fill: parent
         anchors.margins: 20
+        anchors.topMargin: 20 + root.slideOffset
+        anchors.bottomMargin: 20 - root.slideOffset
 
-        RectangularShadow {
+        Shadow {
             id: shadow
             anchors.fill: mainBgRect
             radius: mainBgRect.radius
@@ -304,17 +274,10 @@ PanelWindow {
                     }
                 }
 
-                ActionIcon {
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    iconTxt: "⤢"
-
-                    onClicked: {
-                        Quickshell.execDetached(["bash", "-c",
-                            Quickshell.env("HOME") + "/.config/xcloud/settings/calendar"])
-                        root.isOpen = false
-                    }
-                }
+                // The Hyprland version has a "⤢" button here that opens the
+                // calendar app from ~/.config/xcloud/settings/calendar
+                // (gnome-calendar); the Debian rice ships no calendar app, so
+                // it is left out.
 
                 XCloudButton {
                     anchors.right: parent.right

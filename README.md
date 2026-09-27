@@ -16,7 +16,14 @@ cursor `Bibata-Modern-Ice`.
 Window-manager chrome, since Hyprland/Wayland has no i3/X11 equivalent:
 - `dot_config/i3/` — window manager config + `scripts/lock.sh` (i3lock-color) and
   `scripts/rofi-powermenu.sh` (replaces `wlogout`)
-- `dot_config/polybar/` — status bar (replaces `waybar`)
+- `dot_config/quickshell/` — X11/i3 port of the Hyprland rice's Quickshell shell
+  (status bar, power menu, launcher, calendar, OSD, reduced sidebar), started by
+  `i3/scripts/quickshell.sh`; see the header of `shell.qml` for how it maps onto
+  i3. Not ported: dock, wallpaper picker, welcome app, workspace overview.
+  Support files it expects live in `dot_config/xcloud/` (static `colors/colors.json`
+  palette, `settings/`, `scripts/xcloud-power` etc.)
+- `dot_config/polybar/` — former status bar (replaces `waybar`); still shipped but
+  no longer started by i3 — Quickshell replaced it
 - `dot_config/picom/` — compositor for blur/shadow/opacity (Hyprland does this
   natively)
 - `dot_config/dunst/` — notifications (replaces `swaync`)

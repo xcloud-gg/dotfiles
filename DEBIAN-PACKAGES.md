@@ -14,6 +14,28 @@ pulseaudio pulseaudio-utils pavucontrol playerctl
 brightnessctl maim xclip
 ```
 
+## Quickshell shell (bar, power menu, launcher, calendar, OSD, sidebar)
+`quickshell` itself is not in Debian: it is the xcloud-built
+`quickshell_0.3.1-1~xcloud+deb13u1_amd64.deb` (X11 + i3 IPC, no Wayland/Hyprland
+modules). Everything below is in trixie:
+```
+qml6-module-qtquick qml6-module-qtquick-layouts qml6-module-qtquick-controls
+qml6-module-qtquick-templates qml6-module-qtquick-effects qml6-module-qtquick-window
+qml6-module-qtquick-shapes qml6-module-qtqml-workerscript qt6-svg-plugins
+libgl1-mesa-dri
+upower power-profiles-daemon
+```
+`libgl1-mesa-dri`: the shell's icon colorizing and shadows are `MultiEffect`
+shaders, which need a GL scene graph (under `QT_QUICK_BACKEND=software` they
+simply don't draw). `upower`/`power-profiles-daemon` back the battery and
+power-profile modules. Also used, already listed elsewhere here: `dunst`
+(`dunstctl`), `pulseaudio-utils` (`pactl` -- volume works with PulseAudio or
+pipewire-pulse), `pavucontrol`, `brightnessctl`, `xss-lock`, `x11-xserver-utils`
+(`xset`), `papirus-icon-theme` (replaces the Hyprland rice's kora icons),
+`fonts-noto-color-emoji`, `qt6ct`, `rofi`, `kitty`.
+**Fira Sans** (the UI font) is not packaged in trixie -- installed per user by
+`run_once_install-fira-sans.sh` (pinned google/fonts commit, sha256-checked).
+
 ## Terminal / shell / editors (already-reused app configs)
 ```
 kitty tmux fish zsh neovim vim git curl ca-certificates sudo

@@ -1,6 +1,4 @@
 import Quickshell
-import Quickshell.Wayland
-import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Services.Mpris
 import QtQuick
@@ -9,42 +7,25 @@ import QtQuick.Controls
 import QtQuick.Effects
 import qs.CustomTheme
 
-PanelWindow {
+// Reduced X11/i3 port of the Hyprland sidebar: screenshot button,
+// volume/brightness sliders, MPRIS players, and the status bar / idle-lock
+// switches plus the Qt theme tool. Left out because they have no Debian/i3
+// counterpart in this rice: light/dark toggle and color picker (matugen,
+// hyprpicker), Welcome/Settings/HyprMod buttons, status bar engine
+// (waybar), autohide, dock, game mode, coffee mode, hyprsunset, fastfetch,
+// wallpaper and the GTK theme tools (nwg-look).
+// An OverlayWindow (i3 floating window, closes on focus loss) that slides in
+// from the right edge below the bar, instead of a layer-shell overlay.
+OverlayWindow {
     id: root
-
-    // --- WAYLAND CONFIGURATION ---
-    WlrLayershell.layer: WlrLayer.Overlay
-    exclusionMode: WlrLayershell.Ignore
+    title: "xcloud-sidebar"
 
     implicitWidth: 420 // 380 + 40
-    color: "transparent"
+    // Full height of the output below the bar band (Hyprland: 52px margin).
+    implicitHeight: Math.max(400, outputRect.height - 52)
 
-    property bool isHyprlandSettingsInstalled: false
-
-    anchors {
-        right: true
-        top: true
-        bottom: true
-    }
-
-    // qmllint disable unresolved-type
-    // PanelWindow's "margins" grouped property isn't in qmllint's bundled
-    // QtQuick type info, so it always reports as unresolved - not a bug.
-    margins {
-        top: 52
-        bottom: 0
-    }
-    // qmllint enable unresolved-type
-
-    // --- CLICK OUTSIDE TO CLOSE (Native Hyprland) ---
-    HyprlandFocusGrab {
-        windows: [root]
-        active: root.isOpen
-        onCleared: {
-            if (root.isOpen) {
-                root.isOpen = false
-            }
-        }
+    placement: function (out, w, h) {
+        return { "x": out.x + out.width - w, "y": out.y + 52 }
     }
 
     // --- ESCAPE KEY LISTENER ---
@@ -58,13 +39,13 @@ PanelWindow {
     }
 
     // --- ANIMATION LOGIC ---
-    property bool isOpen: false
-    visible: isOpen || slideAnim.running
+    keepMapped: slideAnim.running
 
-    margins { right: root.currentMargin }
-    property real currentMargin: isOpen ? 0 : -470
+    // Horizontal offset of the panel inside the window: 0 when open, pushed
+    // past the window's right edge when closed.
+    property real slideOffset: isOpen ? 0 : implicitWidth
 
-    Behavior on currentMargin {
+    Behavior on slideOffset {
         NumberAnimation {
             id: slideAnim
             duration: 350
@@ -78,18 +59,6 @@ PanelWindow {
         function open(): void { root.isOpen = true }
         function close(): void { root.isOpen = false }
         function isOpen(): bool { return root.isOpen }
-    }
-
-    Process {
-        command: ["bash", "-c", Quickshell.env("HOME") + "/.config/xcloud/scripts/xcloud-command-exists hyprmod"]
-        running: root.visible
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                console.log(this.text.trim())
-                root.isHyprlandSettingsInstalled = (this.text.trim() === "0")
-            }
-        }
     }
 
     // --- REUSABLE COMPONENTS ---
@@ -216,8 +185,10 @@ PanelWindow {
     Item {
         anchors.fill: parent
         anchors.margins: 20
+        anchors.leftMargin: 20 + root.slideOffset
+        anchors.rightMargin: 20 - root.slideOffset
 
-        RectangularShadow {
+        Shadow {
             id: shadow
             anchors.fill: mainBgRect
             radius: mainBgRect.radius
@@ -252,70 +223,21 @@ PanelWindow {
             anchors.margins: 20
             spacing: 20
 
-            // --- TOP BAR (Light/Dark, Screenshot & Color Picker) ---
+            // --- TOP BAR (Screenshot) ---
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 10
-
-                ActionIcon {
-                    iconSrc: "../shared/icons/darklight.svg"
-                    onClicked: {
-                        Quickshell.execDetached(["bash", "-c", Quickshell.env("HOME") + "/.config/xcloud/scripts/xcloud-toggle-theme"])
-                    }
-                }
-
-                ActionIcon {
-                    iconSrc: "../shared/icons/picker.svg"
-                    onClicked: {
-                        root.isOpen = false
-                        Quickshell.execDetached(["bash", "-c", Quickshell.env("HOME") + "/.config/xcloud/settings/hyprpicker.sh"])
-                    }
-                }
 
                 ActionIcon {
                     iconSrc: "../shared/icons/screenshot.svg"
                     onClicked: {
                         root.isOpen = false
-                        Quickshell.execDetached(["bash", "-c", Quickshell.env("HOME") + "/.config/hypr/scripts/screenshot.sh"])
+                        Quickshell.execDetached(["sh", "-c", Quickshell.env("HOME") + "/.config/i3/scripts/screenshot.sh"])
                     }
                 }
 
                 Item { Layout.fillWidth: true }
             }
-
-            Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.primary; opacity: 0.3 }
-
-            // --- THREE BUTTONS ROW ---
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-
-                XCloudButton {
-                    text: "Welcome"
-                    onClicked: {
-                        root.isOpen = false
-                        Quickshell.execDetached(["bash", "-c", "qs ipc call welcome toggle"])
-                    }
-                }
-                XCloudButton {
-                    text: "Settings"
-                    onClicked: {
-                        root.isOpen = false
-                        // Quickshell.execDetached(["kitty", "--class", "dotfiles-floating", "-e", "xcloud-dotfiles-settings", "gg.xcloud.dotfiles"])
-                        Quickshell.execDetached(["bash", "-c", "qs -p " + Quickshell.env("HOME") + "/.local/share/xcloud-dotfiles-settings/quickshell ipc call settings toggle"])
-                    }
-                }
-                XCloudButton {
-                    text: "HyprMod"
-                    visible: root.isHyprlandSettingsInstalled
-                    onClicked: {
-                        root.isOpen = false
-                        Quickshell.execDetached(["hyprmod"])
-                    }
-                }
-            }
-
-            Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.primary; opacity: 0.3 }
 
             // --- SCROLLABLE CONTENT ---
             ScrollView {
@@ -372,7 +294,7 @@ PanelWindow {
                                 value: 50 // Default
 
                                 Process {
-                                    command: ["bash", "-c", "wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{print int($2 * 100)}'"]
+                                    command: ["sh", "-c", "pactl get-sink-volume @DEFAULT_SINK@ 2>/dev/null | grep -o '[0-9]*%' | head -n1 | tr -d '%'"]
                                     running: root.isOpen
                                     stdout: StdioCollector {
                                         onStreamFinished: {
@@ -383,7 +305,7 @@ PanelWindow {
                                 }
 
                                 onMoved: {
-                                    Quickshell.execDetached(["bash", "-c", "wpctl set-volume @DEFAULT_AUDIO_SINK@ " + Math.round(value) + "%"])
+                                    Quickshell.execDetached(["pactl", "set-sink-volume", "@DEFAULT_SINK@", Math.round(value) + "%"])
                                 }
 
                                 background: Rectangle {
@@ -645,57 +567,11 @@ PanelWindow {
                         visible: Mpris.players.values.length > 0
                     }
 
-                    // --- STATUS BAR ENGINE ---
-                    // Select which bar xCloud Dotfiles uses. The choice is persisted to
-                    // ~/.config/xcloud/settings/statusbar (read by everything else
-                    // here and by the toggle/reload scripts). On = Quickshell,
-                    // Off = Waybar. Flipping it also applies the change live:
-                    // it shows the selected bar and hides the other.
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Text { text: "Status Bar Engine"; color: Theme.primary; font.family: Theme.fontFamily; font.pixelSize: 16 }
-                        Item { Layout.fillWidth: true }
-                        Text {
-                            text: engineSwitch.checked ? "Quickshell" : "Waybar"
-                            color: Theme.primary
-                            opacity: 0.7
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 14
-                            Layout.rightMargin: 8
-                        }
-                        XCloudSwitch {
-                            id: engineSwitch
-                            property bool ready: false
-                            // Read the configured engine (defaults to waybar).
-                            Process {
-                                command: ["bash", "-c", "sb=$(tr -d '[:space:]' < ~/.config/xcloud/settings/statusbar 2>/dev/null); [ \"$sb\" = quickshell ] && echo 1 || echo 0"]
-                                running: root.isOpen
-                                stdout: StdioCollector {
-                                    onStreamFinished: {
-                                        engineSwitch.checked = (this.text.trim() === "1")
-                                        engineSwitch.ready = true
-                                    }
-                                }
-                            }
-                            onClicked: {
-                                if (!ready) return;
-                                // Persist the selection, then apply it live:
-                                // enable the chosen bar and disable the other.
-                                let cmd = checked
-                                    ? "echo quickshell > ~/.config/xcloud/settings/statusbar; qs ipc call statusbar enable; touch ~/.config/xcloud/settings/waybar-disabled; " + Quickshell.env("HOME") + "/.config/waybar/launch.sh"
-                                    : "echo waybar > ~/.config/xcloud/settings/statusbar; rm -f ~/.config/xcloud/settings/waybar-disabled; " + Quickshell.env("HOME") + "/.config/waybar/launch.sh; qs ipc call statusbar disable"
-                                console.log("Status Bar Engine cmd: " + cmd)
-                                Quickshell.execDetached(["bash", "-c", cmd])
-                            }
-                        }
-                        Item { implicitWidth: 28 }
-                    }
-
                     // --- STATUS BAR ---
-                    // Single toggle for whichever bar xCloud Dotfiles is configured to
-                    // use (read from ~/.config/xcloud/settings/statusbar): either
-                    // waybar or the quickshell statusbar. The scripts handle the
-                    // per-bar specifics; this row only reflects/flips the state.
+                    // Shows/hides the Quickshell status bar ("enabled" in the
+                    // master statusbar.json, the same flag SUPER+CTRL+B flips).
+                    // The Hyprland version also drives waybar; there is no
+                    // waybar here.
                     RowLayout {
                         Layout.fillWidth: true
                         Text { text: "Status Bar"; color: Theme.primary; font.family: Theme.fontFamily; font.pixelSize: 16 }
@@ -703,19 +579,12 @@ PanelWindow {
                         XCloudSwitch {
                             id: statusbarSwitch
                             property bool ready: false
-                            property string activeBar: "waybar"
-                            // Read the active bar and its current on/off state in
-                            // one shot ("<bar> <0|1>"): for quickshell the
-                            // "enabled" flag in the master statusbar.json, for
-                            // waybar the presence of the waybar-disabled marker.
                             Process {
                                 id: statusbarStateProc
-                                command: ["bash", "-c", "sb=$(tr -d '[:space:]' < ~/.config/xcloud/settings/statusbar 2>/dev/null); [ -n \"$sb\" ] || sb=waybar; if [ \"$sb\" = quickshell ]; then f=~/.config/xcloud-statusbar/statusbar.json; [ -f \"$f\" ] || f=~/.config/xcloud/settings/statusbar.json; grep -q '\"enabled\"[[:space:]]*:[[:space:]]*false' \"$f\" && s=0 || s=1; else test -f ~/.config/xcloud/settings/waybar-disabled && s=0 || s=1; fi; echo \"$sb $s\""]
+                                command: ["bash", "-c", "f=~/.config/xcloud-statusbar/statusbar.json; [ -f \"$f\" ] || f=~/.config/xcloud/settings/statusbar.json; grep -q '\"enabled\"[[:space:]]*:[[:space:]]*false' \"$f\" && echo 0 || echo 1"]
                                 stdout: StdioCollector {
                                     onStreamFinished: {
-                                        let parts = this.text.trim().split(" ")
-                                        statusbarSwitch.activeBar = parts[0]
-                                        statusbarSwitch.checked = (parts[1] === "1")
+                                        statusbarSwitch.checked = (this.text.trim() === "1")
                                         statusbarSwitch.ready = true
                                     }
                                 }
@@ -723,7 +592,6 @@ PanelWindow {
                             // Re-read the state periodically while the sidebar is
                             // open so the switch tracks external toggles (e.g. the
                             // SUPER+CTRL+B keybinding) live, not just on reopen.
-                            // triggeredOnStart gives the initial read on open.
                             Timer {
                                 interval: 1000
                                 repeat: true
@@ -733,17 +601,8 @@ PanelWindow {
                             }
                             onClicked: {
                                 if (!ready) return;
-                                // Send an absolute command matching the switch's
-                                // post-click position (rather than a blind toggle)
-                                // so the switch always reflects the real bar state,
-                                // even if the bar was toggled elsewhere meanwhile.
-                                let cmd = activeBar === "quickshell"
-                                    ? (checked ? "qs ipc call statusbar enable"
-                                               : "qs ipc call statusbar disable")
-                                    : (checked ? "rm -f ~/.config/xcloud/settings/waybar-disabled; " + Quickshell.env("HOME") + "/.config/waybar/launch.sh"
-                                               : "touch ~/.config/xcloud/settings/waybar-disabled; " + Quickshell.env("HOME") + "/.config/waybar/launch.sh")
-                                console.log("Status Bar cmd: " + cmd)
-                                Quickshell.execDetached(["bash", "-c", cmd])
+                                Quickshell.execDetached(["qs", "ipc", "call", "statusbar",
+                                    checked ? "enable" : "disable"])
                             }
                         }
 
@@ -755,53 +614,10 @@ PanelWindow {
                                 implicitWidth: 220
                                 padding: 8
 
-                                // Only offer "Edit Settings" once the user has an
-                                // xcloud-statusbar override file to edit; the shipped
-                                // statusbar.json is not meant to be edited directly.
-                                property bool overrideExists: false
-                                Process {
-                                    command: ["bash", "-c", "[ -f ~/.config/xcloud-statusbar/statusbar.json ] && echo 1 || echo 0"]
-                                    running: root.isOpen
-                                    stdout: StdioCollector {
-                                        onStreamFinished: {
-                                            statusbarMenu.overrideExists = (this.text.trim() === "1")
-                                        }
-                                    }
-                                }
-
                                 background: Rectangle { color: Theme.background; border.color: Theme.primary; border.width: 1; radius: 8 }
                                 XCloudMenuItem { text: "Reload Status Bar"; onClicked: {
-                                        // Reads the settings file and reloads the
-                                        // matching bar.
-                                        Quickshell.execDetached(["bash", "-c", "~/.config/xcloud/scripts/xcloud-reload-statusbar"])
-                                    }
-                                }
-                                XCloudMenuItem {
-                                    text: "Select Waybar Theme"
-                                    visible: statusbarSwitch.activeBar === "waybar"
-                                    height: visible ? implicitHeight : 0
-                                    onClicked: {
-                                        Quickshell.execDetached(["bash", "-c", Quickshell.env("HOME") + "/.config/waybar/themeswitcher.sh"])
-                                    }
-                                }
-                                XCloudMenuItem {
-                                    text: "Edit Quicklinks"
-                                    visible: statusbarSwitch.activeBar === "waybar"
-                                    height: visible ? implicitHeight : 0
-                                    onClicked: {
-                                        root.isOpen = false
-                                        Quickshell.execDetached(["gnome-text-editor", Quickshell.env("HOME") + "/.config/xcloud/settings/waybar-quicklinks.json"])
-                                    }
-                                }
-                                XCloudMenuItem {
-                                    text: "Edit Settings"
-                                    visible: statusbarMenu.overrideExists
-                                    height: visible ? implicitHeight : 0
-                                    onClicked: {
-                                        root.isOpen = false
-                                        // Edit the master file: the xcloud-statusbar override when it
-                                        // exists, otherwise the shipped statusbar.json.
-                                        Quickshell.execDetached(["bash", "-c", "f=~/.config/xcloud-statusbar/statusbar.json; [ -f \"$f\" ] || f=~/.config/xcloud/settings/statusbar.json; ~/.config/xcloud/settings/editor.sh \"$f\""])
+                                        // Re-read statusbar.json and apply it.
+                                        Quickshell.execDetached(["qs", "ipc", "call", "statusbar", "reload"])
                                     }
                                 }
                             }
@@ -846,350 +662,41 @@ PanelWindow {
                         Item { implicitWidth: 28 }
                     }
 
-                    // --- STATUSBAR AUTOHIDE (Quickshell) ---
+                    // --- AUTO LOCK (xss-lock) ---
+                    // The i3 counterpart of the Hyprland "Hypridle" switch: same
+                    // script as the bar's lock button (i3/scripts/idle.sh).
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { text: "Statusbar Autohide"; color: Theme.primary; font.family: Theme.fontFamily; font.pixelSize: 16 }
+                        Text { text: "Auto Lock"; color: Theme.primary; font.family: Theme.fontFamily; font.pixelSize: 16 }
                         Item { Layout.fillWidth: true }
                         XCloudSwitch {
-                            id: statusbarAutohideSwitch
+                            id: idleSwitch
                             property bool ready: false
-                            // Read the current state from the "autohide" flag in
-                            // the master file: the xcloud-statusbar override when it
-                            // exists, otherwise the shipped statusbar.json. A
-                            // missing file or flag counts as off, matching the
-                            // statusbar's own default.
+                            // Purely a runtime toggle: xss-lock is started by the
+                            // i3 config, so a re-login always brings it back.
                             Process {
-                                id: statusbarAutohideProc
-                                command: ["bash", "-c", "f=~/.config/xcloud-statusbar/statusbar.json; [ -f \"$f\" ] || f=~/.config/xcloud/settings/statusbar.json; grep -q '\"autohide\"[[:space:]]*:[[:space:]]*true' \"$f\" && echo 1 || echo 0"]
+                                id: idleStateProc
+                                command: ["sh", "-c", "pgrep -x xss-lock >/dev/null && echo 1 || echo 0"]
                                 stdout: StdioCollector {
                                     onStreamFinished: {
-                                        console.log("Test for Statusbar Autohide: " + this.text.trim())
-                                        statusbarAutohideSwitch.checked = (this.text.trim() === "1")
-                                        statusbarAutohideSwitch.ready = true
+                                        idleSwitch.checked = (this.text.trim() === "1")
+                                        idleSwitch.ready = true
                                     }
                                 }
                             }
-                            // Polled like the Dock Autohide switch below, so the
-                            // state tracks changes made outside the sidebar (the
-                            // SUPER + ALT + B keybinding).
                             Timer {
                                 interval: 1000
                                 repeat: true
                                 running: root.isOpen
                                 triggeredOnStart: true
-                                onTriggered: statusbarAutohideProc.running = true
+                                onTriggered: idleStateProc.running = true
                             }
                             onClicked: {
                                 if (!ready) return;
-                                // The statusbar owns the file write; just tell it
-                                // the new state via IPC. `checked` already
-                                // reflects the post-click position.
-                                let ipcCmd = checked
-                                ? "qs ipc call statusbar autohideOn"
-                                : "qs ipc call statusbar autohideOff"
-                                console.log("Statusbar Autohide cmd: " + ipcCmd)
-                                Quickshell.execDetached(["bash", "-c", ipcCmd])
+                                Quickshell.execDetached(["sh", "-c", Quickshell.env("HOME") + "/.config/i3/scripts/idle.sh " + (checked ? "on" : "off")])
                             }
                         }
                         Item { implicitWidth: 28 }
-                    }
-
-                    // --- DOCK ---
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Text { text: "Dock"; color: Theme.primary; font.family: Theme.fontFamily; font.pixelSize: 16 }
-                        Item { Layout.fillWidth: true }
-                        XCloudSwitch {
-                            id: dockSwitch
-                            property bool ready: false
-                            // Read the current state from the "enabled" flag in
-                            // the master file: the xcloud-dock override when it
-                            // exists, otherwise the shipped dock.json. A missing
-                            // file or flag counts as on, matching the dock's own
-                            // default.
-                            Process {
-                                id: dockStateProc
-                                command: ["bash", "-c", "f=~/.config/xcloud-dock/dock.json; [ -f \"$f\" ] || f=~/.config/xcloud/settings/dock.json; grep -q '\"enabled\"[[:space:]]*:[[:space:]]*false' \"$f\" && echo 0 || echo 1"]
-                                stdout: StdioCollector {
-                                    onStreamFinished: {
-                                        console.log("Test for Dock: " + this.text.trim())
-                                        dockSwitch.checked = (this.text.trim() === "1")
-                                        dockSwitch.ready = true
-                                    }
-                                }
-                            }
-                            // Re-read the state periodically while the sidebar is
-                            // open so the switch tracks external toggles (e.g. the
-                            // SUPER+CTRL+D keybinding) live, not just on reopen.
-                            // triggeredOnStart gives the initial read on open.
-                            Timer {
-                                interval: 1000
-                                repeat: true
-                                running: root.isOpen
-                                triggeredOnStart: true
-                                onTriggered: dockStateProc.running = true
-                            }
-                            onClicked: {
-                                if (!ready) return;
-                                // The dock owns the file write; just tell it the
-                                // new state via IPC. `checked` already reflects
-                                // the post-click position.
-                                let ipcCmd = checked
-                                ? "qs ipc call dock enable"
-                                : "qs ipc call dock disable"
-                                console.log("Dock cmd: " + ipcCmd)
-                                Quickshell.execDetached(["bash", "-c", ipcCmd])
-                            }
-                        }
-
-                        SettingsWheel {
-                            onClicked: dockMenu.open()
-                            Menu {
-                                id: dockMenu
-                                y: parent.height
-                                implicitWidth: 220
-                                padding: 8
-
-                                background: Rectangle { color: Theme.background; border.color: Theme.primary; border.width: 1; radius: 8 }
-                                XCloudMenuItem { text: "Reload Dock"; onClicked: {
-                                        // Tells the running dock to re-read its
-                                        // settings files and apply them live.
-                                        Quickshell.execDetached(["bash", "-c", "~/.config/xcloud/scripts/xcloud-reload-dock"])
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // --- DOCK AUTOHIDE ---
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Text { text: "Dock Autohide"; color: Theme.primary; font.family: Theme.fontFamily; font.pixelSize: 16 }
-                        Item { Layout.fillWidth: true }
-                        XCloudSwitch {
-                            id: dockAutohideSwitch
-                            property bool ready: false
-                            // Read the current state from the "autohide" flag in
-                            // the master file: the xcloud-dock override when it
-                            // exists, otherwise the shipped dock.json. A missing
-                            // file or flag counts as off, matching the dock's own
-                            // default.
-                            Process {
-                                id: dockAutohideProc
-                                command: ["bash", "-c", "f=~/.config/xcloud-dock/dock.json; [ -f \"$f\" ] || f=~/.config/xcloud/settings/dock.json; grep -q '\"autohide\"[[:space:]]*:[[:space:]]*true' \"$f\" && echo 1 || echo 0"]
-                                stdout: StdioCollector {
-                                    onStreamFinished: {
-                                        console.log("Test for Dock Autohide: " + this.text.trim())
-                                        dockAutohideSwitch.checked = (this.text.trim() === "1")
-                                        dockAutohideSwitch.ready = true
-                                    }
-                                }
-                            }
-                            // Polled like the Dock switch above, so the state
-                            // tracks changes made outside the sidebar.
-                            Timer {
-                                interval: 1000
-                                repeat: true
-                                running: root.isOpen
-                                triggeredOnStart: true
-                                onTriggered: dockAutohideProc.running = true
-                            }
-                            onClicked: {
-                                if (!ready) return;
-                                // The dock owns the file write; just tell it the
-                                // new state via IPC. `checked` already reflects
-                                // the post-click position.
-                                let ipcCmd = checked
-                                ? "qs ipc call dock autohideOn"
-                                : "qs ipc call dock autohideOff"
-                                console.log("Dock Autohide cmd: " + ipcCmd)
-                                Quickshell.execDetached(["bash", "-c", ipcCmd])
-                            }
-                        }
-                        Item { implicitWidth: 28 }
-                    }
-
-                    // --- GAMEMODE ---
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Text { text: "Gamemode"; color: Theme.primary; font.family: Theme.fontFamily; font.pixelSize: 16 }
-                        Item { Layout.fillWidth: true }
-                        XCloudSwitch {
-                            id: gamemodeSwitch
-                            property bool ready: false
-                            Process {
-                                command: ["bash", "-c", "test -f ~/.config/xcloud/settings/gamemode-enabled && echo 0 || echo 1"]
-                                running: root.isOpen
-                                stdout: StdioCollector {
-                                    onStreamFinished: {
-                                        console.log("Test for Gamemode: " + this.text.trim())
-                                        gamemodeSwitch.checked = (this.text.trim() === "0")
-                                        gamemodeSwitch.ready = true
-                                    }
-                                }
-                            }
-                            onClicked: {
-                                if (!ready) return;
-                                Quickshell.execDetached(["bash", "-c", Quickshell.env("HOME") + "/.config/hypr/scripts/gamemode.sh"])
-                            }
-                        }
-                        Item { implicitWidth: 28 }
-                    }
-
-                    // --- HYPRIDLE ---
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Text { text: "Hypridle"; color: Theme.primary; font.family: Theme.fontFamily; font.pixelSize: 16 }
-                        Item { Layout.fillWidth: true }
-                        XCloudSwitch {
-                            id: hypridleSwitch
-                            property bool ready: false
-                            // Purely a runtime toggle: hypridle is started by
-                            // Hyprland's autostart, so a reboot always brings it
-                            // back. Nothing is persisted here.
-                            Process {
-                                id: hypridleStateProc
-                                command: ["bash", "-c", "pgrep -x hypridle >/dev/null && echo 1 || echo 0"]
-                                stdout: StdioCollector {
-                                    onStreamFinished: {
-                                        console.log("Test for Hypridle: " + this.text.trim())
-                                        hypridleSwitch.checked = (this.text.trim() === "1")
-                                        hypridleSwitch.ready = true
-                                    }
-                                }
-                            }
-                            // Re-read while the sidebar is open so the switch
-                            // tracks external toggles (waybar hypridle module)
-                            // live. triggeredOnStart gives the initial read.
-                            Timer {
-                                interval: 1000
-                                repeat: true
-                                running: root.isOpen
-                                triggeredOnStart: true
-                                onTriggered: hypridleStateProc.running = true
-                            }
-                            onClicked: {
-                                if (!ready) return;
-                                // Same script waybar uses, so both stay in sync.
-                                Quickshell.execDetached(["bash", "-c", Quickshell.env("HOME") + "/.config/hypr/scripts/hypridle.sh toggle"])
-                            }
-                        }
-                        Item { implicitWidth: 28 }
-                    }
-
-                    // --- COFFEE MODE ---
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Text { text: "Coffee Mode"; color: Theme.primary; font.family: Theme.fontFamily; font.pixelSize: 16 }
-                        Item { Layout.fillWidth: true }
-                        XCloudSwitch {
-                            id: coffeeModeSwitch
-                            property bool ready: false
-                            // Timed hypridle suppression (default 10 min,
-                            // auto re-enabling) -- see xcloud-coffee-mode.
-                            Process {
-                                id: coffeeModeStateProc
-                                command: ["bash", "-c", "~/.config/xcloud/scripts/xcloud-coffee-mode status"]
-                                stdout: StdioCollector {
-                                    onStreamFinished: {
-                                        console.log("Test for Coffee Mode: " + this.text.trim())
-                                        coffeeModeSwitch.checked = (this.text.trim() !== "off")
-                                        coffeeModeSwitch.ready = true
-                                    }
-                                }
-                            }
-                            // Re-read while the sidebar is open so the switch
-                            // flips back off on its own once the timer expires.
-                            Timer {
-                                interval: 1000
-                                repeat: true
-                                running: root.isOpen
-                                triggeredOnStart: true
-                                onTriggered: coffeeModeStateProc.running = true
-                            }
-                            onClicked: {
-                                if (!ready) return;
-                                let cmd = checked
-                                    ? "~/.config/xcloud/scripts/xcloud-coffee-mode"
-                                    : "~/.config/xcloud/scripts/xcloud-coffee-mode cancel"
-                                Quickshell.execDetached(["bash", "-c", cmd])
-                            }
-                        }
-                        Item { implicitWidth: 28 }
-                    }
-
-                    // --- HYPRSUNSET SCHEDULER ---
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Text { text: "Auto Day/Night"; color: Theme.primary; font.family: Theme.fontFamily; font.pixelSize: 16 }
-                        Item { Layout.fillWidth: true }
-                        XCloudSwitch {
-                            id: hyprsunsetSchedulerSwitch
-                            property bool ready: false
-                            // Background loop toggled on/off via a cache-dir
-                            // marker file -- same pattern as wallpaper
-                            // automation. See xcloud-hyprsunset-scheduler.
-                            Process {
-                                command: ["bash", "-c", "kill -0 \"$(cat ~/.cache/xcloud/hyprland-dotfiles/hyprsunset-scheduler 2>/dev/null)\" 2>/dev/null && echo 1 || echo 0"]
-                                running: root.isOpen
-                                stdout: StdioCollector {
-                                    onStreamFinished: {
-                                        console.log("Test for Hyprsunset Scheduler: " + this.text.trim())
-                                        hyprsunsetSchedulerSwitch.checked = (this.text.trim() === "1")
-                                        hyprsunsetSchedulerSwitch.ready = true
-                                    }
-                                }
-                            }
-                            onClicked: {
-                                if (!ready) return;
-                                Quickshell.execDetached(["bash", "-c", Quickshell.env("HOME") + "/.config/xcloud/scripts/xcloud-hyprsunset-scheduler"])
-                            }
-                        }
-                        Item { implicitWidth: 28 }
-                    }
-
-                    // --- FASTFETCH ---
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Text { text: "Fastfetch"; color: Theme.primary; font.family: Theme.fontFamily; font.pixelSize: 16 }
-                        Item { Layout.fillWidth: true }
-                        XCloudSwitch {
-                            id: fastfetchSwitch
-                            property bool ready: false
-                            Process {
-                                command: ["bash", "-c", "test -f ~/.config/xcloud/settings/hide-fastfetch && echo 1 || echo 0"]
-                                running: root.isOpen
-                                stdout: StdioCollector {
-                                    onStreamFinished: {
-                                        console.log("Test for Fastfetch: " + this.text.trim())
-                                        fastfetchSwitch.checked = (this.text.trim() === "0")
-                                        fastfetchSwitch.ready = true
-                                    }
-                                }
-                            }
-                            onClicked: {
-                                if (!ready) return;
-                                Quickshell.execDetached(["bash", "-c", Quickshell.env("HOME") + "/.config/xcloud/scripts/xcloud-toggle-fastfetch"])
-                            }
-                        }
-                        Item { implicitWidth: 28 }
-                    }
-
-                    Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.primary; opacity: 0.3; Layout.topMargin: 5; Layout.bottomMargin: 5 }
-
-                    // --- WALLPAPER ---
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Text { text: "Wallpaper"; color: Theme.primary; font.family: Theme.fontFamily; font.pixelSize: 16 }
-                        Item { Layout.fillWidth: true }
-                        ActionIcon {
-                            iconSrc: "../shared/icons/wallpaper.svg"
-                            onClicked: {
-                                root.isOpen = false
-                                Quickshell.execDetached(["bash", "-c", Quickshell.env("HOME") + "/.config/xcloud/scripts/xcloud-wallpaper-app"])
-                            }
-                        }
                     }
 
                     // --- THEME ---
@@ -1207,19 +714,9 @@ PanelWindow {
                                 padding: 8
 
                                 background: Rectangle { color: Theme.background; border.color: Theme.primary; border.width: 1; radius: 8 }
-                                XCloudMenuItem { text: "Set GTK Theme"; onClicked: {
-                                        root.isOpen = false
-                                        Quickshell.execDetached(["nwg-look"])
-                                    }
-                                }
                                 XCloudMenuItem { text: "Set QT Theme"; onClicked: {
                                         root.isOpen = false
                                         Quickshell.execDetached(["qt6ct"])
-                                    }
-                                }
-                                XCloudMenuItem { text: "Refresh GTK Theme"; onClicked: {
-                                        root.isOpen = false
-                                        Quickshell.execDetached(["bash", "-c", Quickshell.env("HOME") + "/.config/hypr/scripts/gtk.sh"])
                                     }
                                 }
                             }
