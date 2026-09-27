@@ -6,6 +6,7 @@
 # Exports
 # -----------------------------------------------------
 export EDITOR=nvim
+export BROWSER=zen
 
 # Idempotent PATH prepend/append: 00-init can run more than once per shell
 # session (nested subshells, `bash -c` calls from Quickshell widgets, etc.),

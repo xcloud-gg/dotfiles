@@ -4,6 +4,11 @@
 
 # The 'finder' command (Fuzzy Finder)
 finder() {
+    if [ ! -x "$HOME/.config/xcloud/bin/xcloud-finder" ]; then
+        echo "finder: ~/.config/xcloud/bin/xcloud-finder not found (that helper" >&2
+        echo "isn't part of this rice yet — see xcloud-gg/dotfiles' README)" >&2
+        return 1
+    fi
     # Run the script and capture the result
     local result=$($HOME/.config/xcloud/bin/xcloud-finder)
 
@@ -34,7 +39,7 @@ y() {
 # -----------------------------------------------------
 # Fastfetch
 # -----------------------------------------------------
-if [[ $(tty) == *"pts"* ]]; then
+if [[ $(tty) == *"pts"* ]] && command -v fastfetch >/dev/null 2>&1; then
     if [ ! -f $HOME/.config/xcloud/settings/hide-fastfetch ]; then
         # Disable terminal auto-wrap (DECAWM) for the run so a line that's
         # wider than a narrow/tiled terminal (e.g. the cpu line's clock

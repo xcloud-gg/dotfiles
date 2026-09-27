@@ -15,7 +15,7 @@ end
 # -----------------------------------------------------
 # Fastfetch
 # -----------------------------------------------------
-if status is-interactive
+if status is-interactive; and command -v fastfetch >/dev/null 2>&1
     # Disable terminal auto-wrap (DECAWM) for the run so a line that's wider
     # than a narrow/tiled terminal (e.g. the cpu line's clock speed) clips
     # at the right edge instead of wrapping and breaking the box-drawing

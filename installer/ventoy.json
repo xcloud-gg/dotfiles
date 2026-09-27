@@ -1,0 +1,24 @@
+{
+    "menu_alias": [
+        {
+            "image": "/debian-13.7.0-amd64-netinst.iso",
+            "alias": "Debian 13 (trixie) netinst"
+        },
+        {
+            "image": "/netboot.xyz.iso",
+            "alias": "netboot.xyz"
+        }
+    ],
+    "auto_install": [
+        {
+            "image": "/debian-13.7.0-amd64-netinst.iso",
+            "template": "/ventoy/debian_preseed.cfg"
+        }
+    ],
+    "control": [
+        { "VTOY_TREE_VIEW_MENU_STYLE": "1" },
+        { "VTOY_DEFAULT_MENU_MODE": "0" },
+        { "VTOY_SECONDARY_BOOT_MENU_STYLE": "1" },
+        { "VTOY_LINUX_REMOUNT": "1" }
+    ]
+}

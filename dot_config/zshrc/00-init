@@ -7,6 +7,7 @@
 # -----------------------------------------------------
 export EDITOR=nvim
 export ZSH="$HOME/.oh-my-zsh"
+export BROWSER=zen
 
 # Idempotent PATH append: 00-init can run more than once per shell session
 # (nested subshells, `bash -c`/`zsh -c` calls from Quickshell widgets,

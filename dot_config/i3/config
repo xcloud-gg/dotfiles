@@ -29,6 +29,7 @@ set $menu rofi -show drun -config ~/.config/rofi/config-i3.rasi
 bindsym $mod+Return exec $term
 bindsym $mod+d exec $menu
 bindsym $mod+shift+d exec rofi -show run -config ~/.config/rofi/config-i3.rasi
+bindsym $mod+b exec zen
 
 # ---- window management ----
 floating_modifier $mod
