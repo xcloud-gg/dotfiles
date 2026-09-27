@@ -1,0 +1,47 @@
+# Mirrors xcloud-gg/dotfiles:DEBIAN-PACKAGES.md — keep them in sync.
+
+# Desktop / WM
+xorg i3-wm i3lock i3status
+polybar picom dunst rofi nitrogen feh
+lightdm lightdm-gtk-greeter
+xss-lock numlockx x11-xserver-utils xdg-utils
+network-manager network-manager-gnome
+pulseaudio pulseaudio-utils pavucontrol playerctl
+brightnessctl maim xclip
+
+# Terminal / shell / editors
+kitty tmux fish zsh neovim vim git curl ca-certificates sudo
+
+# Fonts / theming
+fonts-jetbrains-mono fonts-font-awesome fonts-noto-color-emoji
+papirus-icon-theme bibata-cursor-theme
+gtk2-engines-murrine gnome-themes-extra qt6ct
+
+# Portability / drivers
+firmware-linux firmware-misc-nonfree
+autorandr zram-tools
+mesa-utils libgl1-mesa-dri xserver-xorg-video-all
+unattended-upgrades firefox-esr chromium
+# chezmoi: not in trixie (sid only) — upstream .deb in hook 0050
+
+# NVIDIA (decision 2026-09-27: baked into the image; only binds where the
+# hardware exists; DKMS builds against the image kernel — see README.md)
+nvidia-driver linux-headers-amd64
+
+# Filesystem / encryption / boot — the installed system is a copy of this
+# squashfs, so everything the LUKS2 -> LVM -> Btrfs root needs must be here
+btrfs-progs cryptsetup cryptsetup-initramfs lvm2 tpm2-tools efibootmgr
+
+# Locale / keyboard for the installed system
+locales console-setup keyboard-configuration
+
+# Docker: docker-ce & co. come from Docker's repo in hook 0050 (rootless only);
+# the Debian-side rootless prerequisites are here
+uidmap dbus-user-session slirp4netns gpg
+
+# Agent kit: everything bootstrap-host.sh apt-installs on Debian, so its
+# first-boot apt run is a no-op; plus the ssh server
+gnupg jq rsync acl e2fsprogs util-linux logrotate age openssh-client openssh-server bsdutils
+
+# Live system (live-installer strips these from the installed target)
+live-boot live-config live-config-systemd

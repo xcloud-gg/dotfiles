@@ -1,0 +1,11 @@
+#!/bin/sh
+# Stage the agent kit for first boot. NOT run here: bootstrap-host.sh
+# generates per-host keys (age, deploy, ansible) and must run on each host.
+set -e
+KIT=/root/xcloud-agent-kit
+rm -rf "$KIT"; mkdir -p "$KIT"
+tar -xzf /root/xcloud-agent-kit.tar.gz -C "$KIT" --strip-components=1
+(cd "$KIT" && sha256sum --quiet -c SHA256SUMS) || { echo "FATAL: agent kit checksum mismatch"; exit 1; }
+install -m 0644 /root/operator.pub "$KIT/operator.pub"
+rm -f /root/xcloud-agent-kit.tar.gz /root/operator.pub
+chmod 0700 "$KIT"

@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+systemctl enable lightdm.service
+systemctl enable xcloud-firstboot.service
+systemctl enable ssh.service
+# Rootless Docker only (see run_once_setup-docker-rootless.sh in the dotfiles).
+systemctl mask docker.service docker.socket
+# zram swap, as on loki
+printf 'ALGO=zstd\nPERCENT=50\n' > /etc/default/zramswap
+systemctl enable zramswap.service
+systemctl --global enable xcloud-first-login.service

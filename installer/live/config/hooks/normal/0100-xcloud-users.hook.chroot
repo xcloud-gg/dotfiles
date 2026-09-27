@@ -1,0 +1,18 @@
+#!/bin/sh
+# Accounts, UIDs pinned to match loki (decision 2026-09-27): xcloud=1000, marius=1001.
+# Passwords stay locked; they're set on first boot (xcloud-firstboot). marius
+# gets admin via Debian's `sudo` group (with password) — the same group
+# bootstrap-host.sh uses for xcloud on Debian — and is NOT in aios or any
+# container-runtime group (aiOS invariant 12). aios itself is created by
+# bootstrap-host.sh on first boot, only for aios-* roles.
+set -e
+getent group xcloud >/dev/null || groupadd -g 1000 xcloud
+id xcloud >/dev/null 2>&1 || useradd -u 1000 -g 1000 -m -s /usr/bin/zsh -c "xCloud operator admin" xcloud
+getent group marius >/dev/null || groupadd -g 1001 marius
+id marius >/dev/null 2>&1 || useradd -u 1001 -g 1001 -m -s /usr/bin/zsh -c "Marius" marius
+for g in sudo audio video plugdev netdev; do
+    getent group "$g" >/dev/null && usermod -aG "$g" marius
+done
+passwd -l xcloud
+passwd -l marius
+[ "$(id -u xcloud)" = 1000 ] && [ "$(id -u marius)" = 1001 ] || { echo "FATAL: UID pinning failed"; exit 1; }

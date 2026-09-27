@@ -1,0 +1,67 @@
+#!/bin/bash
+# xcloud-firstboot — runs once, on tty1, before the display manager, on a host
+# installed from the xCloud live ISO. Does everything that must be unique per
+# host and so can't be baked into the image. Log: /var/log/xcloud-firstboot.log
+set -uo pipefail
+LOG=/var/log/xcloud-firstboot.log
+KIT=/root/xcloud-agent-kit
+exec > >(tee -a "$LOG") 2>&1
+chvt 1 2>/dev/null || true
+
+fail() {
+    echo; echo "!! xcloud-firstboot FAILED: $*"
+    echo "!! Log: $LOG. Fix, then re-run: /usr/local/sbin/xcloud-firstboot"
+    echo "!! Dropping to a root shell; the display manager will NOT start until this succeeds."
+    /bin/bash -l </dev/tty1 >/dev/tty1 2>&1
+    exit 1
+}
+
+echo "=== xcloud-firstboot: $(date) on $(hostname) ==="
+
+echo "--- per-host identity: machine-id, SSH host keys ---"
+[ -s /etc/machine-id ] || systemd-machine-id-setup || fail "machine-id"
+ls /etc/ssh/ssh_host_*_key >/dev/null 2>&1 || dpkg-reconfigure -f noninteractive openssh-server || fail "ssh host keys"
+
+echo "--- waiting for network (needed: bootstrap-host.sh downloads Claude Code) ---"
+for i in $(seq 1 60); do
+    curl -fsS -o /dev/null --max-time 3 https://deb.debian.org/ && break
+    [ "$i" = 60 ] && fail "no network after 60s — plug in ethernet or run nmtui, then re-run"
+    sleep 1
+done
+
+echo; echo "--- password for marius (desktop user) ---"
+until passwd marius; do echo "try again"; done
+
+host=$(hostname -s)
+case "$host" in
+    thor) roles=platform,aios-thor ;;
+    *)    roles=aios-debian ;;
+esac
+echo; echo "Hostname '$host' -> agent-kit roles: $roles"
+read -r -p "Use these roles? [Y/n/custom] " ans </dev/tty1
+case "$ans" in
+    ""|y|Y) ;;
+    n|N) fail "aborted by operator" ;;
+    *) roles=$ans ;;
+esac
+
+echo; echo "--- bootstrap-host.sh --roles $roles (sets xcloud's password too) ---"
+"$KIT/bootstrap/bootstrap-host.sh" --roles "$roles" --operator-key "$KIT/operator.pub" --claude-version stable \
+    </dev/tty1 || fail "bootstrap-host.sh"
+
+echo "--- checks ---"
+visudo -c || fail "visudo -c"
+id -nG marius | grep -qwE 'aios|docker' && fail "marius is in aios/docker (aiOS invariant 12)"
+stat -c '%A %U:%G %n' /opt/claude /opt/claude/xcloud
+sudo -l -U xcloud
+
+{
+    echo "xcloud-firstboot $(date -Is) on $host, roles $roles — PUBLIC keys only"
+    su - xcloud -c 'grep -h "public key" ~/.config/sops/age/keys.txt' 2>/dev/null
+    cat /home/xcloud/.ssh/*.pub 2>/dev/null
+} > /root/xcloud-firstboot.txt
+chmod 0600 /root/xcloud-firstboot.txt
+
+mkdir -p /var/lib/xcloud && touch /var/lib/xcloud/firstboot.done
+echo; echo "=== done. Public keys saved to /root/xcloud-firstboot.txt. Next: log in as xcloud, run claude to sign in; netbird enrollment per the kit README."
+read -r -p "Press Enter to start the desktop." _ </dev/tty1

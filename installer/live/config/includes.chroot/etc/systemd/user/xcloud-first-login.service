@@ -1,0 +1,11 @@
+[Unit]
+Description=xCloud: finish dotfiles setup on this user's first login (run_once scripts)
+ConditionPathExists=!%h/.local/state/xcloud/first-login.done
+ConditionUser=!root
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/xcloud-first-login
+
+[Install]
+WantedBy=default.target

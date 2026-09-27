@@ -1,0 +1,15 @@
+#!/bin/sh
+# xcloud-gg/dotfiles for both accounts. Scripts are excluded here: the
+# docker-rootless one exits 0 without a user session, and chezmoi would then
+# record it as done forever. They run on first graphical login instead
+# (xcloud-first-login.service, a global systemd --user unit).
+set -e
+REPO=https://github.com/xcloud-gg/dotfiles.git
+for u in marius xcloud; do
+    su - "$u" -c "chezmoi init --apply --exclude=scripts $REPO"
+    test -f "/home/$u/.config/i3/config" || { echo "FATAL: dotfiles not applied for $u"; exit 1; }
+done
+# Pre-install the non-Debian apps for marius so first login doesn't wait on
+# downloads. Same scripts chezmoi will run later (both skip when already present).
+su - marius -c 'sh ~/.local/share/chezmoi/run_once_install-zen-browser.sh'
+su - marius -c 'sh ~/.local/share/chezmoi/run_once_install-claude-code.sh'
