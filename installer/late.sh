@@ -231,6 +231,19 @@ echo "Docker packages installed; system-wide daemon disabled (rootless only)."
 # ---------------------------------------------------------------------------
 # Dotfiles, shell, display manager
 # ---------------------------------------------------------------------------
+echo "--- installing chezmoi (not in trixie's archive — sid only; official"
+echo "    upstream .deb, checksum-verified) ---"
+in-target sh -c '
+  set -e
+  v=2.72.2
+  base=https://github.com/twpayne/chezmoi/releases/download/v$v
+  cd /tmp
+  curl -fsSLO "$base/chezmoi_${v}_linux_amd64.deb"
+  curl -fsSL "$base/chezmoi_${v}_checksums.txt" | grep " chezmoi_${v}_linux_amd64.deb\$" | sha256sum -c -
+  DEBIAN_FRONTEND=noninteractive apt-get install -y "./chezmoi_${v}_linux_amd64.deb"
+  rm -f "chezmoi_${v}_linux_amd64.deb"
+'
+
 echo "--- enabling lightdm, applying xcloud-gg/dotfiles for marius ---"
 in-target systemctl enable lightdm
 in-target su - marius -c "chezmoi init --apply https://github.com/xcloud-gg/dotfiles.git"
