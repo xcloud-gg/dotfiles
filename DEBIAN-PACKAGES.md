@@ -9,7 +9,7 @@ xorg i3-wm i3lock i3status
 polybar picom dunst rofi feh imagemagick
 lightdm lightdm-gtk-greeter
 xss-lock x11-xserver-utils xdg-utils xsettingsd
-lxpolkit gammastep blueman xdg-desktop-portal-gtk
+lxpolkit gammastep blueman xdg-desktop-portal-gtk libnotify-bin
 nautilus loupe gnome-text-editor gnome-calculator
 network-manager network-manager-gnome
 pulseaudio pulseaudio-utils pavucontrol playerctl

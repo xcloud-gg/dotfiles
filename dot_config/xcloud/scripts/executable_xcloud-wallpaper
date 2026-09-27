@@ -196,7 +196,10 @@ if [ "$RESTORE" = true ]; then
     # ~/.config; only a new image (or missing variants) needs a re-theme.
     set_wallpaper
     if [ "$(cat "$CACHE_FILE" 2>/dev/null)" = "$IMAGE_PATH" ] && [ -f "$BLURRED_WALLPAPER" ] \
-        && [ -f "$SQUARE_WALLPAPER" ] && [ -f "$RASI_FILE" ]; then
+        && [ -f "$SQUARE_WALLPAPER" ]; then
+        # A pre-seeded (e.g. /etc/skel) rasi may not point at this user's cache
+        grep -qF "$BLURRED_WALLPAPER" "$RASI_FILE" 2>/dev/null || \
+            echo "* { current-image: url(\"$BLURRED_WALLPAPER\", height); }" > "$RASI_FILE"
         info "Done"
         exit 0
     fi
