@@ -22,42 +22,75 @@ client.urgent            $urgent  $urgent  $bg     $urgent    $urgent
 client.placeholder       $border  $bg      $fg     $border    $border
 client.background        $bg
 
-# ---- terminal / launcher ----
+# ---- keybindings ----
+# Mirrors the Hyprland rice (hypr/conf/keybindings/default.lua): same combos,
+# nearest i3/X11 action. "HYPR-ONLY" = no equivalent here yet (kept as a
+# comment so the combo stays reserved). `qs ipc ...` lines are for a future
+# Quickshell bar replacing polybar.
+# Differences from i3 defaults (re-homed so Hyprland's layout wins):
+#   focus mode_toggle  $mod+space       -> $mod+shift+space
+#   kill               $mod+shift+q     -> $mod+q
+#   floating toggle    $mod+shift+space -> $mod+t
+#   move window        $mod+shift+arrow -> $mod+alt+arrow  (shift+arrow = resize)
+#   layout toggle split $mod+e          -> $mod+j
+#   split v            $mod+v           -> $mod+shift+v
+#   layout stacking    $mod+s           -> $mod+shift+g
+#   reload             $mod+shift+c     -> $mod+ctrl+r
+#   lock               $mod+l           -> $mod+ctrl+l
+#   power menu         $mod+shift+e     -> $mod+ctrl+p
 set $term kitty
 set $menu rofi -show drun -config ~/.config/rofi/config-i3.rasi
+set $s ~/.config/i3/scripts
 
+# ---- applications ----
 bindsym $mod+Return exec $term
+bindsym $mod+b exec zen
+# SUPER+E file manager: none in the Debian package list; rofi's file browser
+# (already in config-i3.rasi modi) until one is added.
+bindsym $mod+e exec rofi -show filebrowser -config ~/.config/rofi/config-i3.rasi
+# HYPR-ONLY SUPER+CTRL+E emoji picker (Emote flatpak; no picker installed)
+# HYPR-ONLY SUPER+C calculator (gnome-calculator; not installed)
+bindsym $mod+space exec $menu
 bindsym $mod+d exec $menu
 bindsym $mod+shift+d exec rofi -show run -config ~/.config/rofi/config-i3.rasi
-bindsym $mod+b exec zen
 
-# ---- window management ----
+# ---- windows ----
 floating_modifier $mod
-bindsym $mod+shift+q kill
+tiling_drag modifier titlebar
+bindsym $mod+q kill
+bindsym $mod+shift+q exec --no-startup-id $s/kill-app.sh
 bindsym $mod+f fullscreen toggle
-bindsym $mod+shift+space floating toggle
-bindsym $mod+space focus mode_toggle
-
+# HYPR-ONLY SUPER+M maximize (i3 has no maximize; $mod+f / $mod+g are closest)
+bindsym $mod+t floating toggle
+bindsym $mod+shift+t [workspace="__focused__"] floating toggle
+bindsym $mod+Mod1+t floating toggle; sticky toggle
+bindsym $mod+shift+space focus mode_toggle
+# HYPR-ONLY SUPER+O toggle window opacity (picom rule; no per-window toggle wired up)
+bindsym $mod+j layout toggle split
+# HYPR-ONLY SUPER+K swapsplit (no i3 equivalent)
+bindsym $mod+g layout toggle tabbed split
+bindsym $mod+shift+g layout stacking
+bindsym $mod+w layout tabbed
 bindsym $mod+h split h
-bindsym $mod+v split v
-bindsym $mod+r mode "resize"
+bindsym $mod+shift+v split v
+bindsym $mod+a focus parent
 
 bindsym $mod+Left focus left
 bindsym $mod+Down focus down
 bindsym $mod+Up focus up
 bindsym $mod+Right focus right
 
-bindsym $mod+shift+Left move left
-bindsym $mod+shift+Down move down
-bindsym $mod+shift+Up move up
-bindsym $mod+shift+Right move right
+bindsym $mod+shift+Left resize shrink width 100 px or 5 ppt
+bindsym $mod+shift+Right resize grow width 100 px or 5 ppt
+bindsym $mod+shift+Up resize shrink height 100 px or 5 ppt
+bindsym $mod+shift+Down resize grow height 100 px or 5 ppt
 
-# layouts
-bindsym $mod+s layout stacking
-bindsym $mod+w layout tabbed
-bindsym $mod+e layout toggle split
-bindsym $mod+a focus parent
+bindsym $mod+Mod1+Left move left
+bindsym $mod+Mod1+Down move down
+bindsym $mod+Mod1+Up move up
+bindsym $mod+Mod1+Right move right
 
+bindsym $mod+r mode "resize"
 mode "resize" {
     bindsym Left  resize shrink width 10 px or 10 ppt
     bindsym Down  resize grow height 10 px or 10 ppt
@@ -90,30 +123,76 @@ bindsym $mod+8 workspace number $ws8
 bindsym $mod+9 workspace number $ws9
 bindsym $mod+0 workspace number $ws10
 
-bindsym $mod+shift+1 move container to workspace number $ws1
-bindsym $mod+shift+2 move container to workspace number $ws2
-bindsym $mod+shift+3 move container to workspace number $ws3
-bindsym $mod+shift+4 move container to workspace number $ws4
-bindsym $mod+shift+5 move container to workspace number $ws5
-bindsym $mod+shift+6 move container to workspace number $ws6
-bindsym $mod+shift+7 move container to workspace number $ws7
-bindsym $mod+shift+8 move container to workspace number $ws8
-bindsym $mod+shift+9 move container to workspace number $ws9
-bindsym $mod+shift+0 move container to workspace number $ws10
+# Hyprland's movetoworkspace follows the window, so these do too
+bindsym $mod+shift+1 move container to workspace number $ws1; workspace number $ws1
+bindsym $mod+shift+2 move container to workspace number $ws2; workspace number $ws2
+bindsym $mod+shift+3 move container to workspace number $ws3; workspace number $ws3
+bindsym $mod+shift+4 move container to workspace number $ws4; workspace number $ws4
+bindsym $mod+shift+5 move container to workspace number $ws5; workspace number $ws5
+bindsym $mod+shift+6 move container to workspace number $ws6; workspace number $ws6
+bindsym $mod+shift+7 move container to workspace number $ws7; workspace number $ws7
+bindsym $mod+shift+8 move container to workspace number $ws8; workspace number $ws8
+bindsym $mod+shift+9 move container to workspace number $ws9; workspace number $ws9
+bindsym $mod+shift+0 move container to workspace number $ws10; workspace number $ws10
+
+bindsym --whole-window $mod+button5 workspace next_on_output
+bindsym --whole-window $mod+button4 workspace prev_on_output
+
+# scratchpad (Hyprland special:scratchpad)
+bindsym $mod+s scratchpad show
+bindsym $mod+shift+s move scratchpad
 
 # ---- session ----
+bindsym $mod+ctrl+r reload
 bindsym $mod+shift+c reload
 bindsym $mod+shift+r restart
-bindsym $mod+shift+e exec "~/.config/i3/scripts/rofi-powermenu.sh"
-bindsym $mod+l exec "~/.config/i3/scripts/lock.sh"
+bindsym $mod+ctrl+l exec --no-startup-id $s/lock.sh
+bindsym $mod+l exec --no-startup-id $s/lock.sh
+# qs ipc call power toggle
+bindsym $mod+ctrl+p exec --no-startup-id $s/rofi-powermenu.sh
+bindsym $mod+shift+e exec --no-startup-id $s/rofi-powermenu.sh
+bindsym $mod+ctrl+k exec --no-startup-id $s/keybindings.sh
+# qs -p ~/.config/quickshell/overview ipc call overview toggle
+bindsym $mod+Tab exec rofi -show window -config ~/.config/rofi/config-i3.rasi
 
-# ---- media / screenshots ----
-bindsym XF86AudioRaiseVolume exec pactl set-sink-volume @DEFAULT_SINK@ +5%
-bindsym XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -5%
-bindsym XF86AudioMute exec pactl set-sink-mute @DEFAULT_SINK@ toggle
-bindsym XF86MonBrightnessUp exec brightnessctl set +5%
-bindsym XF86MonBrightnessDown exec brightnessctl set 5%-
-bindsym Print exec maim ~/Pictures/$(date +%Y-%m-%d-%H%M%S).png
+# ---- screenshots ----
+bindsym Print exec --no-startup-id $s/screenshot.sh --instant
+bindsym $mod+Print exec --no-startup-id $s/screenshot.sh
+bindsym $mod+Mod1+f exec --no-startup-id $s/screenshot.sh --instant
+bindsym --release $mod+Mod1+s exec --no-startup-id $s/screenshot.sh --instant-area
+# HYPR-ONLY SUPER+SHIFT+Print screen recording (no recorder installed)
+# HYPR-ONLY SUPER+ALT+A OCR text extractor (no tesseract installed)
+
+# ---- desktop / bar ----
+# HYPR-ONLY SUPER+SHIFT+W random wallpaper; SUPER+ALT+W wallpaper automation
+bindsym $mod+ctrl+w exec nitrogen
+bindsym $mod+shift+b exec --no-startup-id ~/.config/polybar/launch.sh
+bindsym $mod+ctrl+b exec --no-startup-id polybar-msg cmd toggle
+# HYPR-ONLY SUPER+ALT+B statusbar autohide
+# HYPR-ONLY SUPER+CTRL+D / SUPER+ALT+D dock toggle / autohide (no dock on i3)
+# HYPR-ONLY SUPER+SHIFT+A toggle animations; SUPER+ALT+G game mode
+# HYPR-ONLY SUPER+CTRL+T bar theme switcher; SUPER+SHIFT+M light/dark toggle; CTRL+ALT+T theme picker
+# HYPR-ONLY SUPER+SHIFT+H night light (hyprsunset; no redshift installed)
+# qs ipc call sidebar toggle        -> SUPER+CTRL+S
+# qs ipc call calendar toggle       -> SUPER+CTRL+C
+# qs ipc call statusbar focus       -> SUPER+ALT+SPACE
+
+# ---- clipboard / notes ----
+# HYPR-ONLY SUPER+V clipboard history (no clipboard manager installed; only xclip)
+bindsym $mod+n exec --no-startup-id sh -c 'mkdir -p ~/.docs && exec kitty --class notebook -d ~/.docs nvim'
+bindsym $mod+shift+n exec --no-startup-id $s/quicknote.sh
+
+# ---- media keys (i3lock grabs the keyboard, so these don't work while locked) ----
+bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +5%
+bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -5%
+bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle
+bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle
+bindsym XF86MonBrightnessUp exec --no-startup-id brightnessctl -e4 -n2 set 5%+
+bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl -e4 -n2 set 5%-
+bindsym XF86AudioNext exec --no-startup-id playerctl next
+bindsym XF86AudioPause exec --no-startup-id playerctl play-pause
+bindsym XF86AudioPlay exec --no-startup-id playerctl play-pause
+bindsym XF86AudioPrev exec --no-startup-id playerctl previous
 
 # ---- gaps / borders ----
 gaps inner 8
