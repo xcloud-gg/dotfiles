@@ -1,0 +1,54 @@
+#!/bin/bash
+# xcloud-sync — bring the operator's checkouts of xc0-sh/xcloud-docs and xc0-sh/xcloud-state up to date.
+# Installed to ~/.local/bin by `install.sh operator`; also run by the operator workspace's SessionStart hook.
+#   docs:  fast-forward main only across commits signed by a key in ~/.config/xcloud/docs.allowed_signers
+#          (the same rule the agent hosts' xcloud-repo-sync applies). Before main is published, the checkout
+#          stays on the unsigned import branch and says so.
+#   state: fast-forward when the working tree is clean and has no local commits; otherwise report only.
+# Prints one line per repository. Never rebases, stashes, resets, or discards anything.
+set -uo pipefail
+XC=${XCLOUD_HOME:-$HOME/xcloud}
+SIGNERS=${XCLOUD_DOCS_SIGNERS:-$HOME/.config/xcloud/docs.allowed_signers}
+D=$XC/xcloud-docs S=$XC/xcloud-state
+g() { git -C "$D" -c gpg.ssh.allowedSignersFile="$SIGNERS" "$@"; }
+clean() { [[ -z $(git -C "$1" status --porcelain 2>/dev/null) ]]; }
+
+docs() {
+  [[ -d $D/.git ]] || { echo "docs: no checkout at $D (run: install.sh operator)"; return; }
+  timeout 30 git -C "$D" fetch -q --prune origin 2>/dev/null || { echo "docs: fetch failed — local copy $(git -C "$D" rev-parse --short=12 HEAD 2>/dev/null || echo none)"; return; }
+  if ! git -C "$D" rev-parse -q --verify origin/main >/dev/null; then
+    echo "docs: $(git -C "$D" rev-parse --abbrev-ref HEAD)@$(git -C "$D" rev-parse --short=12 HEAD) — main NOT PUBLISHED yet (unsigned import; read only, run publish.sh)"
+    return
+  fi
+  local new=() c range=HEAD..origin/main
+  git -C "$D" rev-parse -q --verify HEAD >/dev/null || range=origin/main   # fresh checkout: verify everything
+  mapfile -t new < <(git -C "$D" rev-list --reverse "$range")
+  if (( ${#new[@]} )); then
+    [[ -s $SIGNERS ]] || { echo "docs: ${#new[@]} new commit(s) NOT applied — no pinned signer in $SIGNERS"; return; }
+    for c in "${new[@]}"; do
+      g verify-commit "$c" &>/dev/null || { echo "docs: REFUSED — $c on origin/main is not signed by a pinned signer; checkout left at $(git -C "$D" rev-parse --short=12 HEAD 2>/dev/null || echo "none (empty)")"; return; }
+    done
+    clean "$D" || { echo "docs: ${#new[@]} signed commit(s) waiting, not applied — uncommitted changes in $D"; return; }
+    if [[ $range == HEAD..origin/main && $(git -C "$D" rev-parse --abbrev-ref HEAD) == main ]]; then git -C "$D" merge -q --ff-only origin/main || { echo "docs: main has diverged from origin/main — not touched"; return; }
+    else git -C "$D" checkout -q -B main origin/main; fi
+  fi
+  echo "docs: main@$(git -C "$D" rev-parse --short=12 HEAD) $(git -C "$D" log -1 --format=%cs) — signed, current"
+}
+
+state() {
+  [[ -d $S/.git ]] || { echo "state: no checkout at $S (run: install.sh operator)"; return; }
+  timeout 30 git -C "$S" fetch -q origin 2>/dev/null || { echo "state: fetch failed — local copy $(git -C "$S" rev-parse --short=12 HEAD)"; return; }
+  local up behind ahead msg
+  up=$(git -C "$S" rev-parse --abbrev-ref '@{u}' 2>/dev/null || echo origin/main)
+  behind=$(git -C "$S" rev-list --count "HEAD..$up" 2>/dev/null || echo 0)
+  ahead=$(git -C "$S" rev-list --count "$up..HEAD" 2>/dev/null || echo 0)
+  if (( behind > 0 && ahead == 0 )) && clean "$S"; then git -C "$S" merge -q --ff-only "$up" && behind=0; fi
+  msg="state: $(git -C "$S" rev-parse --short=12 HEAD)"
+  (( behind )) && msg+=" — $behind behind $up (not merged: local changes; git pull --rebase)"
+  (( ahead )) && msg+=" — $ahead local commit(s) not pushed"
+  clean "$S" || msg+=" — uncommitted changes"
+  echo "$msg"
+}
+
+docs
+state

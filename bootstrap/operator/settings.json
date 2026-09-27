@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "additionalDirectories": ["@XC@/xcloud-docs", "@XC@/xcloud-state"],
+    "deny": [
+      "Read(~/.ssh/id_*)",
+      "Read(~/.ssh/*_ed25519)",
+      "Read(~/.ssh/*_ed25519_sk)",
+      "Read(~/.ssh/xcloud-keys-signing)",
+      "Read(~/.config/sops/age/**)",
+      "Bash(xcloud-approve*)",
+      "Bash(*/xcloud-approve*)",
+      "Bash(*publish.sh*)",
+      "Bash(*tools/build.sh*)",
+      "Bash(ssh-keygen -Y sign*)",
+      "Bash(git commit -S*)",
+      "Bash(git tag -s*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [{ "type": "command", "command": "@XC@/operator/.claude/hooks/session-context.sh", "timeout": 90 }]
+      }
+    ]
+  },
+  "env": { "XCLOUD_HOME": "@XC@" }
+}
