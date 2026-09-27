@@ -6,9 +6,11 @@ and `installer/late.sh` install before applying this repo with `chezmoi`.
 ## Desktop/WM
 ```
 xorg i3-wm i3lock i3status
-polybar picom dunst rofi nitrogen feh
+polybar picom dunst rofi feh imagemagick
 lightdm lightdm-gtk-greeter
-xss-lock numlockx x11-xserver-utils xdg-utils xsettingsd
+xss-lock x11-xserver-utils xdg-utils xsettingsd
+lxpolkit gammastep blueman xdg-desktop-portal-gtk
+nautilus loupe gnome-text-editor gnome-calculator
 network-manager network-manager-gnome
 pulseaudio pulseaudio-utils pavucontrol playerctl
 brightnessctl maim xclip
@@ -31,10 +33,11 @@ simply don't draw). `upower`/`power-profiles-daemon` back the battery and
 power-profile modules. Also used, already listed elsewhere here: `dunst`
 (`dunstctl`), `pulseaudio-utils` (`pactl` -- volume works with PulseAudio or
 pipewire-pulse), `pavucontrol`, `brightnessctl`, `xss-lock`, `x11-xserver-utils`
-(`xset`), `papirus-icon-theme` (replaces the Hyprland rice's kora icons),
-`fonts-noto-color-emoji`, `qt6ct`, `rofi`, `kitty`.
-**Fira Sans** (the UI font) is not packaged in trixie -- installed per user by
-`run_once_install-fira-sans.sh` (pinned google/fonts commit, sha256-checked).
+(`xset`), `fonts-noto-color-emoji`, `qt6ct`, `rofi`, `kitty`. Icons: kora
+(see "Not packaged" below), `papirus-icon-theme` as the fallback.
+**Fira Sans** (the UI font) is not packaged in trixie -- the live ISO installs
+it system-wide; elsewhere `run_once_install-fira-sans.sh` installs it per user
+(pinned google/fonts commit, sha256-checked; a no-op when the font exists).
 
 ## Terminal / shell / editors (already-reused app configs)
 ```
@@ -46,8 +49,30 @@ fzf zoxide direnv atuin eza fastfetch
 ```
 fonts-jetbrains-mono fonts-font-awesome fonts-noto-color-emoji
 papirus-icon-theme bibata-cursor-theme
-gtk2-engines-murrine gnome-themes-extra qt6ct
+gtk2-engines-murrine gnome-themes-extra qt6ct kde-style-breeze
 ```
+`kde-style-breeze`: the Qt widget style qt6ct.conf selects (`style=Breeze`), as
+on the Hyprland rice; qt6ct's custom palette is matugen's
+`~/.config/qt6ct/colors/matugen.conf`. `~/.xsessionrc` sets
+`QT_QPA_PLATFORMTHEME=qt6ct`, the cursor and `QS_ICON_THEME`.
+
+## Wallpaper / theming (matugen)
+The palette is generated from the wallpaper, like on the Hyprland rice:
+`~/.config/xcloud/scripts/xcloud-wallpaper` sets it with `feh` and runs
+`matugen image <img> -t scheme-content -m dark --prefer=saturation`
+(`~/.config/matugen/config.toml`: kitty, tmux, btop, rofi, gtk, qt6ct, i3,
+i3lock, dunst, polybar, oh-my-posh and the Quickshell/nvim `colors.json`), then
+makes the blurred/square variants with ImageMagick (`magick`, so ImageMagick 7
+-- trixie's `imagemagick` is 7.1). The rendered outputs for the default
+wallpaper are committed, so everything is themed before the first run.
+Not in trixie, installed by the live ISO:
+- **matugen 4.2.0** -- upstream static binary at `/usr/local/bin/matugen`
+- **waypaper 2.9** -- wallpaper picker (SUPER+CTRL+W), `pipx` install exposed at
+  `/usr/local/bin/waypaper`, `feh` backend
+- **kora** icon theme -- in `/usr/share/icons/kora` (upstream bikass/kora)
+- **forest2.jpg**, the default wallpaper -- `/usr/share/backgrounds/xcloud/`
+Optional: **i3lock-color** (not packaged in Debian) -- `lock.sh` uses it for
+the hyprlock-style clock when present, plain `i3lock` otherwise.
 
 ## Portability / driver set (from aios-portable-agent-prompt.md §4/§6 —
 ## generic "borrowed hardware" support; also applies to any Debian target,

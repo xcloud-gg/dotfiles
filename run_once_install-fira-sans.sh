@@ -1,15 +1,17 @@
 #!/bin/sh
 # Fira Sans (the rice's UI font -- Quickshell's Theme.fontFamily is
 # "Fira Sans Semibold", dunst/i3 use "Fira Sans") isn't packaged in Debian 13
-# (only fonts-firacode, the monospace sibling). Install the upstream TTFs from
-# google/fonts at a pinned commit, checksum-verified, into ~/.local/share/fonts.
+# (only fonts-firacode, the monospace sibling). The xcloud live ISO installs
+# it system-wide, so this is a no-op there; elsewhere install the upstream
+# TTFs from google/fonts at a pinned commit, checksum-verified, into
+# ~/.local/share/fonts.
 set -eu
 
 dest="$HOME/.local/share/fonts/FiraSans"
 commit=e345593da2a4d596212542edbd28f2ed08fe6cbe
 base="https://raw.githubusercontent.com/google/fonts/$commit/ofl/firasans"
 
-if [ -f "$dest/FiraSans-SemiBold.ttf" ]; then
+if [ -f "$dest/FiraSans-SemiBold.ttf" ] || fc-list 'Fira Sans:style=SemiBold' family 2>/dev/null | grep -q .; then
     echo "Fira Sans already installed, skipping"
     exit 0
 fi
