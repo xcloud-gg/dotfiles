@@ -8,7 +8,7 @@ and `installer/late.sh` install before applying this repo with `chezmoi`.
 xorg i3-wm i3lock i3status
 polybar picom dunst rofi nitrogen feh
 lightdm lightdm-gtk-greeter
-xss-lock numlockx x11-xserver-utils xdg-utils
+xss-lock numlockx x11-xserver-utils xdg-utils xsettingsd
 network-manager network-manager-gnome
 pulseaudio pulseaudio-utils pavucontrol playerctl
 brightnessctl maim xclip
@@ -17,6 +17,7 @@ brightnessctl maim xclip
 ## Terminal / shell / editors (already-reused app configs)
 ```
 kitty tmux fish zsh neovim vim git curl ca-certificates sudo
+fzf zoxide direnv atuin eza fastfetch
 ```
 
 ## Fonts / theming
@@ -64,6 +65,7 @@ layout and why it's shaped that way.
 ```
 docker-ce docker-ce-cli containerd.io docker-buildx-plugin
 docker-compose-plugin docker-ce-rootless-extras uidmap dbus-user-session slirp4netns
+iptables
 ```
 Installed from Docker's own apt repo (not Debian's), added by `installer/late.sh`.
 Deliberately **not** paired with `usermod -aG docker <user>` — see the script's
@@ -84,10 +86,9 @@ nvidia-cuda-dev nvidia-container-toolkit
   (`run_once_install-claude-code.sh`), same method `bootstrap-host.sh` uses for
   the `xcloud` account, kept consistent fleet-wide. Auto-updates in the
   background.
-- `fastfetch` — not in Debian's repos as of trixie; the shell rc files already
-  guard every `fastfetch` call with `command -v fastfetch` so its absence is
-  silent rather than a `command not found` error (relevant for a minimal/CLI-
-  guest session that hasn't installed it). Grab the `.deb` release from
-  https://github.com/fastfetch-cli/fastfetch/releases if you want it.
-- `atuin`, `oh-my-posh` — install via their own installer scripts (already
-  assumed by `dot_config/atuin` and `dot_config/ohmyposh` if reused as-is).
+- `fastfetch`, `atuin` — both are in trixie after all (listed above).
+- `oh-my-posh` — upstream static binary to `/usr/local/bin`, checksum-verified
+  (live ISO: `installer/live` hook 0050).
+- oh-my-zsh plus the custom plugins `zsh-autosuggestions`,
+  `zsh-syntax-highlighting` and `fast-syntax-highlighting` — git checkouts at
+  pinned commits in `~/.oh-my-zsh` (live ISO: `installer/live` hook 0250).
