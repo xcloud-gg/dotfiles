@@ -235,6 +235,8 @@ exec --no-startup-id dunst
 # square variants (lock screen, rofi) if they are missing.
 exec --no-startup-id ~/.config/xcloud/scripts/xcloud-wallpaper --restore
 exec --no-startup-id xsettingsd
+# GTK settings.ini -> gsettings (dark colour scheme for libadwaita apps)
+exec --no-startup-id $s/gtk.sh
 exec --no-startup-id lxpolkit
 exec --no-startup-id blueman-applet
 # Night light on the Hyprland rice's day/night schedule (07:00 / 19:00),
