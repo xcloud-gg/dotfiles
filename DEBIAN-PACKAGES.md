@@ -34,9 +34,22 @@ firmware-linux firmware-misc-nonfree
 network-manager autorandr zram-tools
 mesa-utils libgl1-mesa-dri xserver-xorg-video-all
 unattended-upgrades
-chezmoi
 firefox-esr chromium
 ```
+
+## chezmoi — NOT in trixie's archive
+`chezmoi` is only packaged in Debian **sid**, not trixie, so `apt install
+chezmoi` fails on Debian 13 (found building the live ISO, 2026-09-27 — it was
+listed above as an apt package, and the netinst preseed's `pkgsel/include`
+carried the same mistake). Install the official upstream `.deb`, checksum-verified:
+```
+v=2.72.2
+base=https://github.com/twpayne/chezmoi/releases/download/v$v
+curl -fsSLO "$base/chezmoi_${v}_linux_amd64.deb"
+curl -fsSL "$base/chezmoi_${v}_checksums.txt" | grep " chezmoi_${v}_linux_amd64.deb\$" | sha256sum -c -
+sudo apt install ./chezmoi_${v}_linux_amd64.deb
+```
+The live ISO does exactly this in its build hook `0050-xcloud-thirdparty`.
 
 ## Filesystem / encryption
 ```
