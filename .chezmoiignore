@@ -1,0 +1,4 @@
+# Repo docs and the installers are not dotfiles — keep them out of $HOME.
+README.md
+DEBIAN-PACKAGES.md
+installer
