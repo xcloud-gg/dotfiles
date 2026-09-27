@@ -1,5 +1,9 @@
 #!/bin/sh
-# i3lock-color themed to match the xcloud rice
+# i3lock-color themed to match the xcloud rice. Debian only packages plain
+# i3lock, so fall back to it (solid rice background) when i3lock-color is absent.
+if ! command -v i3lock-color >/dev/null 2>&1; then
+  exec i3lock -c 0c1609
+fi
 exec i3lock-color \
   --insidever-color=182214ff \
   --insidewrong-color=ffb4abff \
