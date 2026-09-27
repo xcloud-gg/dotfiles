@@ -178,7 +178,9 @@ bindsym $mod+ctrl+b exec --no-startup-id polybar-msg cmd toggle
 # qs ipc call statusbar focus       -> SUPER+ALT+SPACE
 
 # ---- clipboard / notes ----
-# HYPR-ONLY SUPER+V clipboard history (no clipboard manager installed; only xclip)
+# SUPER+V clipboard history: copyq (clipmenu is also installed for minimal
+# setups, with clipmenud left disabled so the two don't both own the clipboard)
+bindsym $mod+v exec --no-startup-id copyq toggle
 bindsym $mod+n exec --no-startup-id sh -c 'mkdir -p ~/.docs && exec kitty --class notebook -d ~/.docs nvim'
 bindsym $mod+shift+n exec --no-startup-id $s/quicknote.sh
 
@@ -217,4 +219,5 @@ exec --no-startup-id xsetroot -solid "#0c1609"
 exec --no-startup-id xsettingsd
 exec --no-startup-id numlockx on
 exec --no-startup-id nm-applet
+exec --no-startup-id copyq --start-server
 exec --no-startup-id xss-lock -- ~/.config/i3/scripts/lock.sh
