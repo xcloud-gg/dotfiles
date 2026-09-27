@@ -228,7 +228,7 @@ for_window [title="^xcloud-(power|calendar|launcher|sidebar)$"] floating enable,
 # Quickshell shell: status bar + power menu/calendar/launcher/sidebar/OSD.
 # exec_always + `qs kill` in the script: an i3 restart restarts the shell.
 exec_always --no-startup-id $s/quickshell.sh
-exec --no-startup-id picom --config ~/.config/picom/picom.conf
+exec --no-startup-id ~/.config/i3/scripts/picom.sh
 exec --no-startup-id dunst
 # Wallpaper: the last one set (~/.cache/xcloud/hyprland-dotfiles/current_wallpaper),
 # else /usr/share/backgrounds/xcloud/forest2.jpg; also recreates the blurred/
