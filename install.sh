@@ -44,8 +44,13 @@ dotfiles_mode() {  # chezmoi + this repository for the current user
     if [[ $FAM == arch ]]; then pkgs -- chezmoi
     else
       say "chezmoi (upstream installer → ~/.local/bin; not packaged in trixie)"
-      sh -c "$(curl -fsSL https://get.chezmoi.io)" -- -b "$HOME/.local/bin"
+      local ci; ci=$(mktemp)
+      curl -fsSL https://get.chezmoi.io -o "$ci" \
+        || curl -fsSL https://raw.githubusercontent.com/twpayne/chezmoi/master/assets/scripts/install.sh -o "$ci" \
+        || die "cannot download the chezmoi installer"
+      sh "$ci" -b "$HOME/.local/bin"; rm -f "$ci"
       export PATH="$HOME/.local/bin:$PATH"
+      command -v chezmoi &>/dev/null || die "chezmoi did not install"
     fi
   fi
   src=$(chezmoi source-path 2>/dev/null || echo "$HOME/.local/share/chezmoi")
@@ -79,7 +84,7 @@ main() {
     else mode=dotfiles; fi
   fi
   command -v git &>/dev/null || { command -v apt-get &>/dev/null && sudo apt-get install -y -q git; } || { command -v pacman &>/dev/null && sudo pacman -S --needed --noconfirm git; }
-  local W; W=$(mktemp -d); trap 'rm -rf "$W"' EXIT
+  W=$(mktemp -d); trap 'rm -rf "$W"' EXIT   # global: the trap runs after main() returns
   fetch_repo "$W/dotfiles" "$ref" || { echo "cannot fetch $REPO@$ref" >&2; exit 1; }
   # shellcheck source=bootstrap/lib.sh
   . "$W/dotfiles/bootstrap/lib.sh"
