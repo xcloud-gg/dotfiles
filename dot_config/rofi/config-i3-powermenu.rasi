@@ -1,5 +1,6 @@
-/* Themed powermenu — reuses the rice's existing colors.rasi */
-@import "~/.config/rofi/colors.rasi"
+/* Themed powermenu — colors.rasi (matugen) plus the i3 rofi widget styling */
+@theme "~/.config/rofi/colors.rasi"
+@import "~/.config/rofi/i3-style.rasi"
 
 configuration {
     modi: "dmenu";
@@ -9,7 +10,6 @@ configuration {
 
 window {
     width: 240px;
-    border-radius: 12px;
 }
 
 listview {

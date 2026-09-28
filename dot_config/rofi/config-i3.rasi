@@ -2,6 +2,7 @@
  * (kept as-is from the Hyprland side) pulls in xcloud-app-generated snippets
  * (wallpaper-derived accent, dynamic border radius) that don't exist here. */
 @theme "~/.config/rofi/colors.rasi"
+@import "~/.config/rofi/i3-style.rasi"
 
 configuration {
     modi:                "drun,run,window,filebrowser";
@@ -19,5 +20,8 @@ configuration {
 
 window {
     width: 40%;
-    border-radius: 12px;
+}
+
+listview {
+    lines: 8;
 }

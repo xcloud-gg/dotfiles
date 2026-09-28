@@ -8,7 +8,7 @@
 cache="$HOME/.cache/xcloud/hyprland-dotfiles"
 blurred="$cache/blurred_wallpaper.png"
 
-LOCK_BACKGROUND=101418 LOCK_PRIMARY=9cd0ff LOCK_ON_PRIMARY=003351
+LOCK_BACKGROUND=101418 LOCK_PRIMARY=00ff00 LOCK_ON_PRIMARY=015000
 LOCK_ON_SURFACE=e0e2e8 LOCK_ERROR=ffb4ab
 [ -f "$HOME/.config/i3/lock-colors.sh" ] && . "$HOME/.config/i3/lock-colors.sh"
 

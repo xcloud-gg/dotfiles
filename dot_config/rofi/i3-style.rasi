@@ -1,0 +1,76 @@
+/* Widget styling shared by config-i3.rasi (SUPER+D, SUPER+SHIFT+D,
+ * SUPER+Tab, keybinds, screenshot menu) and config-i3-powermenu.rasi.
+ * Colours are colors.rasi's (matugen): the wallpaper palette, with @primary /
+ * @on-primary being the fixed xcloud green for the border and the selection. */
+* {
+    background-color:  transparent;
+    text-color:        @on-surface;
+}
+
+window {
+    transparency:      "real";
+    background-color:  @background;
+    border:            2px;
+    border-color:      @primary;
+    border-radius:     12px;
+    padding:           12px;
+}
+
+mainbox {
+    spacing:           10px;
+}
+
+inputbar {
+    children:          [ "prompt", "entry" ];
+    spacing:           8px;
+    padding:           8px 12px;
+    border-radius:     8px;
+    background-color:  @surface;
+}
+
+prompt {
+    text-color:        @primary;
+}
+
+entry {
+    placeholder:       "Search";
+    placeholder-color: @on-surface-variant;
+    cursor:            text;
+}
+
+listview {
+    spacing:           4px;
+    scrollbar:         false;
+    fixed-height:      false;
+}
+
+element {
+    padding:           6px 12px;
+    spacing:           10px;
+    border-radius:     8px;
+    cursor:            pointer;
+}
+
+element-icon {
+    size:              24px;
+    cursor:            inherit;
+}
+
+element-text {
+    vertical-align:    0.5;
+    text-color:        inherit;
+    cursor:            inherit;
+}
+
+element selected.normal, element selected.active {
+    background-color:  @primary;
+    text-color:        @on-primary;
+}
+
+element normal.urgent, element alternate.urgent, element selected.urgent {
+    text-color:        @error;
+}
+
+message, textbox {
+    text-color:        @on-surface;
+}
