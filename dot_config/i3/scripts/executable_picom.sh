@@ -1,11 +1,19 @@
 #!/bin/sh
 # Start picom with a backend that works on this machine. glx needs real GPU
-# acceleration; in a VM (virtio/qxl without 3D) it composites stale frames,
-# so windows look frozen/blurry and never update. xrender works everywhere
-# but has no blur. Override with XCLOUD_PICOM_BACKEND=glx|xrender.
+# acceleration; on a software renderer (llvmpipe/softpipe -- e.g. a VM without
+# virgl 3D) it composites stale frames, so windows look frozen/blurry and never
+# update. xrender works everywhere but has no blur. A VM with virtio-gpu 3D
+# (virgl) is a real GL renderer and gets glx + blur like bare metal.
+# Override with XCLOUD_PICOM_BACKEND=glx|xrender.
 backend=${XCLOUD_PICOM_BACKEND:-}
 if [ -z "$backend" ]; then
-    if systemd-detect-virt --vm --quiet 2>/dev/null; then backend=xrender; else backend=glx; fi
+    renderer=$(glxinfo -B 2>/dev/null | sed -n 's/^OpenGL renderer string: //p')
+    case "$renderer" in
+        *llvmpipe*|*softpipe*|*"Software Rasterizer"*) backend=xrender ;;
+        "") # no glxinfo: fall back to "VM means software GL"
+            if systemd-detect-virt --vm --quiet 2>/dev/null; then backend=xrender; else backend=glx; fi ;;
+        *) backend=glx ;;
+    esac
 fi
 
 # kitty's background_opacity 0.7 (kitty.conf, as on Hyprland) is made for a
