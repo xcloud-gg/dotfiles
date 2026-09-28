@@ -14,6 +14,7 @@ BUILDER=$WORK/builder              # Debian trixie chroot that runs live-build
 TREE=$BUILDER/build                # the live-build working tree (auto/ + config/)
 KIT=/opt/claude/xcloud/xcloud-agent-kit.tar.gz
 OPKEY=$HERE/operator.pub           # marius's PUBLIC key -> bootstrap-host.sh --operator-key
+SIGNER=$HERE/signer.pub           # optional: operator's git SIGNING public key -> firstboot verifies kit-* tags with it
 MIRROR=http://deb.debian.org/debian
 
 [[ $EUID -eq 0 ]] || exec sudo "$0" "$@"
@@ -58,6 +59,13 @@ cp -a "$HERE/auto" "$HERE/config" "$TREE/"
 # the operator public key.
 install -D -m 0600 "$KIT" "$TREE/config/includes.chroot/root/xcloud-agent-kit.tar.gz"
 install -D -m 0644 "$OPKEY" "$TREE/config/includes.chroot/root/operator.pub"
+if [[ -s $SIGNER ]]; then
+    ssh-keygen -lf "$SIGNER" >/dev/null || { echo "FATAL: $SIGNER is not an SSH public key" >&2; exit 1; }
+    install -D -m 0644 "$SIGNER" "$TREE/config/includes.chroot/usr/local/share/xcloud/signer.pub"
+    echo "signer baked in: $(ssh-keygen -lf "$SIGNER")"
+else
+    echo "WARNING: no $SIGNER — first boot will use the baked agent kit only (no signed-kit path)" >&2
+fi
 chmod +x "$TREE"/auto/* "$TREE"/config/hooks/normal/*.hook.chroot
 
 echo "--- lb build ---"

@@ -5,3 +5,7 @@ set -e
 rm -f /etc/ssh/ssh_host_*
 : > /etc/machine-id
 rm -f /var/lib/dbus/machine-id
+# DKMS generated a module-signing key pair while building the NVIDIA module.
+# Shipping it would give every install the same private key; DKMS makes a new
+# pair on the host the next time it builds (README.md: Secure Boot).
+rm -f /var/lib/dkms/mok.key /var/lib/dkms/mok.pub

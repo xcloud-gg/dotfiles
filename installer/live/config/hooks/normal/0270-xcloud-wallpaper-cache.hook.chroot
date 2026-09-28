@@ -1,0 +1,39 @@
+#!/bin/sh
+# Pre-render the rice's wallpaper cache for forest2.jpg, so rofi/the shell have
+# their images before xcloud-wallpaper first runs. Same files and ImageMagick
+# commands as xcloud-wallpaper's generate_image_variants (Arch rice,
+# .config/xcloud/scripts/xcloud-wallpaper), with its default blur (50x30,
+# settings/blur.sh) and wallpaper-effect "off". The script regenerates all four
+# files on its first run; /etc/skel's .rasi points into /etc/skel and is only a
+# placeholder until then. Rendered once, then copied (squashfs dedups them).
+set -e
+WALLPAPER=/usr/share/backgrounds/xcloud/forest2.jpg
+BLUR=50x30
+REL=.cache/xcloud/hyprland-dotfiles
+test -f "$WALLPAPER"
+test -x /usr/bin/magick || { echo "FATAL: magick not found (imagemagick)"; exit 1; }
+tmp=$(mktemp -d)
+magick "$WALLPAPER" -resize 75% "$tmp/blurred_wallpaper.png"
+magick "$tmp/blurred_wallpaper.png" -blur "$BLUR" "$tmp/blurred_wallpaper.png"
+magick "$WALLPAPER" -gravity Center -extent 1:1 "$tmp/square_wallpaper.png"
+
+render() {  # $1 = home directory, $2 = owner
+    # Create each missing level as the owner (a root-owned ~/.cache breaks the
+    # session); leave existing ones as the dotfiles made them.
+    for d in "$1/.cache" "$1/.cache/xcloud" "$1/$REL"; do
+        [ -d "$d" ] || install -d -m 0755 -o "$2" -g "$2" "$d"
+    done
+    install -m 0644 -o "$2" -g "$2" "$tmp/blurred_wallpaper.png" "$tmp/square_wallpaper.png" "$1/$REL/"
+    echo "$WALLPAPER" > "$1/$REL/current_wallpaper"
+    echo "* { current-image: url(\"$1/$REL/blurred_wallpaper.png\", height); }" > "$1/$REL/current_wallpaper.rasi"
+    chown "$2:$2" "$1/$REL/current_wallpaper" "$1/$REL/current_wallpaper.rasi"
+}
+render /home/marius marius
+render /home/xcloud xcloud
+render /etc/skel root
+rm -rf "$tmp"
+for h in /home/marius /home/xcloud /etc/skel; do
+    for f in current_wallpaper blurred_wallpaper.png square_wallpaper.png current_wallpaper.rasi; do
+        test -s "$h/$REL/$f" || { echo "FATAL: $h/$REL/$f missing"; exit 1; }
+    done
+done

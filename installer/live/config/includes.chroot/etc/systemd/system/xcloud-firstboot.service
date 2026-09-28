@@ -10,6 +10,10 @@ Before=display-manager.service ssh.service getty@tty1.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+# plymouth still owns the console here (it quits when boot finishes, which
+# this unit blocks, and lightdm Conflicts= plymouth-quit.service), so passwd
+# on tty1 got no input and looped on "passwords do not match".
+ExecStartPre=-/usr/bin/plymouth quit
 ExecStart=/usr/local/sbin/xcloud-firstboot
 StandardInput=tty-force
 StandardOutput=tty

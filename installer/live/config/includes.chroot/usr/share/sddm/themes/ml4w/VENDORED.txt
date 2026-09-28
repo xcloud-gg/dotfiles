@@ -1,0 +1,10 @@
+ml4w SDDM theme, vendored for the xCloud live ISO (baldr).
+Upstream:  https://github.com/mylinuxforwork/ml4w-sddm (fork of
+           https://github.com/uiriansan/SilentSDDM "Silent" 1.4.0)
+Commit:    aa6904f9d43dab4d7e22e80292814f4574f6625f
+License:   GPL-3.0-or-later (LICENSE in this directory)
+Source:    copied from loki:/usr/share/sddm/themes/ml4w (installed 2026-08-31), without .git
+Local changes:
+  backgrounds/ml4w.jpg and backgrounds/default.jpg replaced with forest2.jpg
+  (same file as /usr/share/backgrounds/xcloud/forest2.jpg, md5 8c73ee9b51a0b3ef58dbdbed547a6a52;
+  from the ML4W wallpaper repo, original author unknown). Nothing else changed.

@@ -13,3 +13,13 @@ done
 # downloads. Same scripts chezmoi will run later (both skip when already present).
 su - marius -c 'sh ~/.local/share/chezmoi/run_once_install-zen-browser.sh'
 su - marius -c 'sh ~/.local/share/chezmoi/run_once_install-claude-code.sh'
+# The repo's one-line installer and its modes (install.sh, bootstrap/), from the SAME
+# commit as the applied rice. xcloud-firstboot runs bootstrap/agent-host.sh from here to
+# fetch the signed agent kit, so first boot never pipes a download into a shell.
+src=/home/marius/.local/share/chezmoi
+dst=/usr/local/share/xcloud/dotfiles-bootstrap
+rm -rf "$dst"; install -d -m 0755 "$dst"
+cp -a "$src/install.sh" "$src/bootstrap" "$dst/"
+su - marius -c "git -C $src rev-parse HEAD" > "$dst/REVISION"   # as the owner: git rejects root in a user-owned repo
+chown -R root:root "$dst"
+test -f "$dst/bootstrap/agent-host.sh" -a -f "$dst/bootstrap/lib.sh" || { echo "FATAL: dotfiles bootstrap/ missing"; exit 1; }

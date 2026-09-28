@@ -1,0 +1,27 @@
+#!/bin/sh
+# oh-my-zsh and the custom plugins the dotfiles' zshrc loads (plugins=(...) in
+# dot_config/zshrc/20-customization), for both accounts. None are packaged the
+# way oh-my-zsh expects, so each is fetched at a pinned commit. `master`
+# tracks origin/master so oh-my-zsh's own updater still works afterwards.
+set -e
+fetch() {  # $1 = repo, $2 = commit, $3 = destination
+    git init -q -b master "$3"
+    git -C "$3" remote add origin "https://github.com/$1.git"
+    git -C "$3" fetch -q --depth 1 origin "$2:refs/remotes/origin/master"
+    git -C "$3" checkout -q -B master origin/master
+    git -C "$3" branch -q --set-upstream-to=origin/master master
+    test "$(git -C "$3" rev-parse HEAD)" = "$2"
+}
+src=$(mktemp -d)
+fetch ohmyzsh/ohmyzsh 74965c96098134b192f00084f966b4b02438a739 "$src/.oh-my-zsh"
+fetch zsh-users/zsh-autosuggestions 85919cd1ffa7d2d5412f6d3fe437ebdbeeec4fc5 \
+    "$src/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
+fetch zsh-users/zsh-syntax-highlighting 0bfcb582e71d3abe604ce67bc0fe5a21f377507e \
+    "$src/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
+fetch zdharma-continuum/fast-syntax-highlighting 4672ad5dd9ad68a7effc1476d65afb7c584ce2b3 \
+    "$src/.oh-my-zsh/custom/plugins/fast-syntax-highlighting"
+for u in marius xcloud; do
+    cp -a "$src/.oh-my-zsh" "/home/$u/.oh-my-zsh"
+    chown -R "$u:$u" "/home/$u/.oh-my-zsh"
+done
+rm -rf "$src"

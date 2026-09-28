@@ -14,6 +14,9 @@ set -e
 
 LOG=/tmp/xcloud-install.log
 exec >"$LOG" 2>&1
+# Keep the log in the installed system even if a step fails (it's in the
+# installer's RAM otherwise, gone after reboot).
+trap 'mkdir -p /target/var/log && cp "$LOG" /target/var/log/xcloud-install.log 2>/dev/null || true' EXIT
 echo "=== xcloud late.sh starting: $(date) ==="
 
 # ---------------------------------------------------------------------------
@@ -23,8 +26,10 @@ echo "=== xcloud late.sh starting: $(date) ==="
 ROOT_DEV=$(awk '$2=="/target"{print $1; exit}' /proc/mounts)
 BOOT_DEV=$(awk '$2=="/target/boot"{print $1; exit}' /proc/mounts)
 ESP_DEV=$(awk '$2=="/target/boot/efi"{print $1; exit}' /proc/mounts)
+# trixie's partman-btrfs installs / into a subvolume (@rootfs), not the top level.
+SRC_SV=$(awk '$2=="/target"{print $4; exit}' /proc/mounts | tr ',' '\n' | sed -n 's|^subvol=/*||p')
 [ -n "$ROOT_DEV" ] || { echo "FATAL: could not determine root device from /proc/mounts"; exit 1; }
-echo "root=$ROOT_DEV boot=$BOOT_DEV esp=$ESP_DEV"
+echo "root=$ROOT_DEV boot=$BOOT_DEV esp=$ESP_DEV source-subvol=${SRC_SV:-<top level>}"
 
 MOUNT_OPTS="compress=zstd:3,ssd,discard=async,noatime"
 BTRFS_MNT=/mnt/xcloud-reshape
@@ -57,7 +62,14 @@ echo "--- snapshotting the installed tree into @ (not mv — mv is busybox here"
 echo "    and a cross-subvolume mv of the whole system would silently drop"
 echo "    xattrs/file capabilities via copy+delete; a snapshot is instant and"
 echo "    exact) ---"
-btrfs subvolume snapshot "$BTRFS_MNT" "$BTRFS_MNT/@"
+if [ -n "$SRC_SV" ]; then
+    # Same parent directory, so this is a rename(2): instant, nothing copied.
+    echo "    (installed tree is in subvolume $SRC_SV: renaming it to @ instead)"
+    mv "$BTRFS_MNT/$SRC_SV" "$BTRFS_MNT/@"
+else
+    btrfs subvolume snapshot "$BTRFS_MNT" "$BTRFS_MNT/@"
+fi
+[ -d "$BTRFS_MNT/@/etc" ] || { echo "FATAL: @ has no /etc: the installed tree wasn't found"; exit 1; }
 
 echo "--- creating the other subvolumes empty ---"
 for sv in @home @log @docker @srv; do
@@ -107,6 +119,10 @@ esp_uuid=""
 [ -n "$BOOT_DEV" ] && boot_uuid=$(blkid -s UUID -o value "$BOOT_DEV")
 [ -n "$ESP_DEV" ] && esp_uuid=$(blkid -s UUID -o value "$ESP_DEV")
 
+# Keep d-i's removable-media lines (/dev/sr0 /media/cdrom0): finish-install's
+# load-install-cd mounts the ISO through the target's fstab, and without the
+# line it loops on "Please insert the media" (seen in QEMU 2026-09-27).
+KEEP_MEDIA=$(grep -E '^[^#]*[[:space:]]/media/' /target/etc/fstab || true)
 cat > /target/etc/fstab <<FSTAB
 # xcloud-generated fstab (installer/late.sh) — Btrfs subvolumes on LUKS2+LVM
 UUID=$root_uuid / btrfs subvol=@,$MOUNT_OPTS 0 1
@@ -117,14 +133,44 @@ UUID=$root_uuid /srv btrfs subvol=@srv,nodatacow,ssd,discard=async,noatime 0 2
 FSTAB
 [ -n "$boot_uuid" ] && echo "UUID=$boot_uuid /boot ext4 defaults 0 2" >> /target/etc/fstab
 [ -n "$esp_uuid" ] && echo "UUID=$esp_uuid /boot/efi vfat umask=0077 0 1" >> /target/etc/fstab
+[ -n "$KEEP_MEDIA" ] && echo "$KEEP_MEDIA" >> /target/etc/fstab
 cat /target/etc/fstab
 
 echo "--- dm-crypt performance flags in crypttab (no_read/write_workqueue cuts"
 echo "    a meaningful chunk of encryption overhead on fast NVMe + many-core"
 echo "    CPUs; sector-size is luksFormat-time only and cryptsetup >=2.4"
 echo "    already auto-detects 4K-native disks, so it's not set here) ---"
-sed -i 's/luks$/luks,discard,no-read-workqueue,no-write-workqueue/' /target/etc/crypttab 2>/dev/null || true
+# trixie writes "luks,discard,x-initrd.attach", so match " luks," as well as a bare " luks".
+sed -i -e 's/ luks,/ luks,no-read-workqueue,no-write-workqueue,/' \
+       -e 's/ luks$/ luks,discard,no-read-workqueue,no-write-workqueue/' /target/etc/crypttab 2>/dev/null || true
 cat /target/etc/crypttab 2>/dev/null || echo "(no /etc/crypttab found — unexpected for an encrypted install, check manually)"
+
+echo "--- apt sources: live-installer leaves only the cdrom: line, so write the mirror ---"
+cat > /target/etc/apt/sources.list <<SOURCES
+deb http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
+deb http://security.debian.org/debian-security trixie-security main contrib non-free non-free-firmware
+deb http://deb.debian.org/debian trixie-updates main contrib non-free non-free-firmware
+SOURCES
+
+echo "--- keyboard: d-i copied its own /etc/default/keyboard over the image's and"
+echo "    live-installer ran dpkg-reconfigure keyboard-configuration; restore the"
+echo "    image's XKBOPTIONS (grp:alt_shift_toggle, as on loki) ---"
+if [ -f /target/etc/default/keyboard ]; then
+    sed -i 's/^XKBOPTIONS=.*/XKBOPTIONS="grp:alt_shift_toggle"/' /target/etc/default/keyboard
+    in-target sh -c 'echo "keyboard-configuration keyboard-configuration/optionscode string grp:alt_shift_toggle" | debconf-set-selections'
+    cat /target/etc/default/keyboard
+else
+    echo "WARNING: /target/etc/default/keyboard missing; XKBOPTIONS not set"
+fi
+
+echo "--- purging the live-system packages (finish-install's remove-live-packages"
+echo "    depends on /cdrom still being mounted, and left them installed in QEMU) ---"
+live_pkgs=""
+for p in live-boot live-boot-initramfs-tools live-boot-doc live-config live-config-systemd \
+         live-config-doc live-tools; do
+    [ -f "/target/var/lib/dpkg/info/$p.list" ] && live_pkgs="$live_pkgs $p"
+done
+[ -n "$live_pkgs" ] && in-target apt-get --yes purge $live_pkgs
 
 echo "--- regenerating initramfs and GRUB for the new subvolume root ---"
 in-target update-initramfs -u -k all
@@ -179,8 +225,12 @@ if [ -n "$DATA_DISK" ] && [ "$DATA_DISK" = "$OS_DISK" ]; then
 fi
 if [ -n "$DATA_DISK" ] && [ -b "$DATA_DISK" ]; then
     echo "--- wiping and partitioning $DATA_DISK (games/data) ---"
-    wipefs -af "$DATA_DISK"
-    sfdisk "$DATA_DISK" <<SFDISK
+    # wipefs/sfdisk/mkfs.btrfs come from the installed target: the installer
+    # environment has no wipefs at all and doesn't load fdisk-udeb, so calling
+    # them directly failed here and stopped late.sh (seen in a libvirt test).
+    # /target/dev is bind-mounted above, so the target sees the real disks.
+    chroot /target wipefs -af "$DATA_DISK"
+    chroot /target sfdisk "$DATA_DISK" <<SFDISK
 label: gpt
 ,
 SFDISK
@@ -189,7 +239,7 @@ SFDISK
     [ -b "$DATA_PART" ] || DATA_PART="${DATA_DISK}1"
 
     echo "--- formatting $DATA_PART as btrfs, creating @games/@data ---"
-    mkfs.btrfs -f -L games-data "$DATA_PART"
+    chroot /target mkfs.btrfs -f -L games-data "$DATA_PART"
     mount "$DATA_PART" "$BTRFS_MNT"
     btrfs subvolume create "$BTRFS_MNT/@games"
     btrfs subvolume create "$BTRFS_MNT/@data"
@@ -211,6 +261,4 @@ else
     echo "--- no xcloud.datadisk= on the cmdline (or device absent): data disk untouched ---"
 fi
 
-mkdir -p /target/var/log
-cp "$LOG" /target/var/log/xcloud-install.log 2>/dev/null || true
 echo "=== xcloud late.sh done: $(date) ==="

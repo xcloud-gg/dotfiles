@@ -1,0 +1,70 @@
+#!/bin/sh
+# Look & feel as on loki (Arch): matugen, JetBrainsMono Nerd Font, kora icons,
+# Bibata cursor. Every download pinned and sha256-checked. Fira Sans, the SDDM
+# theme and forest2.jpg are vendored in includes.chroot (README.md: Look & feel).
+set -e
+export DEBIAN_FRONTEND=noninteractive
+
+# matugen (Material You colours from the wallpaper; the rice's templates use it).
+# Not in Debian. Upstream x86_64 binary, dynamically linked, needs GLIBC_2.39
+# (trixie: 2.41). No checksum file upstream: the sha256 is GitHub's asset
+# digest for the release, which matched a local download on 2026-09-28.
+MATUGEN_VERSION=4.2.0
+MATUGEN_SHA256=a2e3b50e49ed6439999ba3c252ed04fabd98ee4e9d12e5e5dff2e66370569751
+tmp=$(mktemp -d)
+curl -fsSL -o "$tmp/matugen.tgz" \
+    "https://github.com/InioX/matugen/releases/download/v$MATUGEN_VERSION/matugen-$MATUGEN_VERSION-x86_64.tar.gz"
+echo "$MATUGEN_SHA256  $tmp/matugen.tgz" | sha256sum -c -
+tar xzf "$tmp/matugen.tgz" -C "$tmp" matugen
+install -m 0755 "$tmp/matugen" /usr/local/bin/matugen
+rm -rf "$tmp"
+/usr/local/bin/matugen --version
+
+# JetBrainsMono Nerd Font, same release as Arch's ttf-jetbrains-mono-nerd 3.5.1.
+# Only the "JetBrainsMono Nerd Font" family the rice uses (16 files, ~39 MiB),
+# not the Mono/Propo variants (~190 MiB more). Checked against the release's
+# SHA-256.txt.
+NERDFONTS_VERSION=3.5.1
+NERDFONTS_SHA256=04d5e8f903693f9dd13e16f867e994834e681eb3c72c0d337a770dcda09010cf
+tmp=$(mktemp -d)
+curl -fsSL -o "$tmp/JetBrainsMono.tar.xz" \
+    "https://github.com/ryanoasis/nerd-fonts/releases/download/v$NERDFONTS_VERSION/JetBrainsMono.tar.xz"
+echo "$NERDFONTS_SHA256  $tmp/JetBrainsMono.tar.xz" | sha256sum -c -
+mkdir "$tmp/f"
+tar xJf "$tmp/JetBrainsMono.tar.xz" -C "$tmp/f"
+dst=/usr/share/fonts/truetype/jetbrains-mono-nerd
+install -d -m 0755 "$dst"
+install -m 0644 "$tmp"/f/JetBrainsMonoNerdFont-*.ttf "$tmp/f/OFL.txt" "$tmp/f/README.md" "$dst/"
+rm -rf "$tmp"
+fc-cache -f
+fc-list | grep -q 'JetBrainsMono Nerd Font' || { echo "FATAL: JetBrainsMono Nerd Font not in fc-list"; exit 1; }
+fc-list | grep -q 'Fira Sans' || { echo "FATAL: Fira Sans (includes.chroot) not in fc-list"; exit 1; }
+
+# kora icon theme (GPL-3.0) + kora-pgrey, as dotfiles/setup/_icons.sh installs
+# them on Arch. Pinned to master as of loki's install (2026-08-31): 7a75842,
+# one commit after tag v2.0.6.
+KORA_COMMIT=7a758429ca3f4f484f4ad4b340a28e2f179e24cf
+KORA_SHA256=f2d836b663729b8fdfec10d317d24d0002a6c0ba224abcf44787ab50e5f3b75c
+tmp=$(mktemp -d)
+curl -fsSL -o "$tmp/kora.tgz" "https://github.com/bikass/kora/archive/$KORA_COMMIT.tar.gz"
+echo "$KORA_SHA256  $tmp/kora.tgz" | sha256sum -c -
+mkdir "$tmp/src"
+tar xzf "$tmp/kora.tgz" -C "$tmp/src" --strip-components=1
+for t in kora kora-pgrey; do
+    rm -rf "/usr/share/icons/$t"
+    cp -a "$tmp/src/$t" "/usr/share/icons/$t"
+    chown -R root:root "/usr/share/icons/$t"
+    gtk-update-icon-cache -f -q "/usr/share/icons/$t"
+done
+install -D -m 0644 "$tmp/src/LICENSE" /usr/share/doc/kora-icon-theme/LICENSE
+echo "https://github.com/bikass/kora @ $KORA_COMMIT" > /usr/share/doc/kora-icon-theme/SOURCE
+rm -rf "$tmp"
+test -f /usr/share/icons/kora/index.theme -a -f /usr/share/icons/kora-pgrey/index.theme
+
+# Default X cursor: Debian manages /usr/share/icons/default/index.theme as the
+# x-cursor-theme alternative. bibata-cursor-theme's postinst only registers its
+# themes if the alternative already exists (install order), so register it here.
+update-alternatives --install /usr/share/icons/default/index.theme x-cursor-theme \
+    /usr/share/icons/Bibata-Modern-Ice/cursor.theme 50
+update-alternatives --set x-cursor-theme /usr/share/icons/Bibata-Modern-Ice/cursor.theme
+grep -q 'Bibata-Modern-Ice' /usr/share/icons/default/index.theme

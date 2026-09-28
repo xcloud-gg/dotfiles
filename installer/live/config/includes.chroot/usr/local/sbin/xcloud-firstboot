@@ -45,9 +45,40 @@ case "$ans" in
     *) roles=$ans ;;
 esac
 
-echo; echo "--- bootstrap-host.sh --roles $roles (sets xcloud's password too) ---"
-"$KIT/bootstrap/bootstrap-host.sh" --roles "$roles" --operator-key "$KIT/operator.pub" --claude-version stable \
-    </dev/tty1 || fail "bootstrap-host.sh"
+# Agent kit: prefer the newest SIGNED kit-* tag of xc0-sh/xcloud-docs (fetched and verified by the
+# dotfiles repo's bootstrap/agent-host.sh, baked in by hook 0200), so a host gets the current kit
+# without an ISO rebuild. It needs the operator's signing key baked in at build time (live/signer.pub),
+# the network, a GitHub device login, and a published kit-* tag; otherwise, or if it fails, fall back
+# to the kit baked into this ISO. Both paths run bootstrap-host.sh, which also sets xcloud's password.
+SIGNER=/usr/local/share/xcloud/signer.pub
+AGENTHOST=/usr/local/share/xcloud/dotfiles-bootstrap/bootstrap/agent-host.sh
+kit_done=""
+if [ -s "$SIGNER" ] && [ -f "$AGENTHOST" ]; then
+    fpr=$(ssh-keygen -lf "$SIGNER" | awk '{print $2}')
+    echo; echo "--- agent kit ---"
+    echo "Signed kit: newest kit-* tag of xc0-sh/xcloud-docs, verified against the signing key"
+    echo "baked into this ISO:  $fpr  ($(awk '{print $3}' "$SIGNER"))"
+    echo "It needs a GitHub device login (you finish it in a browser elsewhere); the login is removed after."
+    read -r -p "Does that fingerprint match your records, and use the signed kit? [Y/n] " ans </dev/tty1
+    case "$ans" in
+        ""|y|Y)
+            echo "--- bootstrap/agent-host.sh --roles $roles (dotfiles $(cat "${AGENTHOST%/bootstrap/agent-host.sh}/REVISION" 2>/dev/null | cut -c1-12)) ---"
+            if bash "$AGENTHOST" --roles "$roles" --operator-key "$KIT/operator.pub" \
+                    --signer-key "$(cat "$SIGNER")" --fingerprint "$fpr" --claude-version stable </dev/tty1; then
+                kit_done=signed
+            else
+                echo "!! the signed kit did not install (see above)."
+                read -r -p "Fall back to the kit baked into this ISO? [Y/n] " ans </dev/tty1
+                case "$ans" in ""|y|Y) ;; *) fail "signed kit failed and fallback declined" ;; esac
+            fi ;;
+    esac
+fi
+if [ -z "$kit_done" ]; then
+    echo; echo "--- bootstrap-host.sh --roles $roles, kit baked into this ISO (sets xcloud's password too) ---"
+    "$KIT/bootstrap/bootstrap-host.sh" --roles "$roles" --operator-key "$KIT/operator.pub" --claude-version stable \
+        </dev/tty1 || fail "bootstrap-host.sh"
+    kit_done=baked
+fi
 
 echo "--- checks ---"
 visudo -c || fail "visudo -c"
@@ -56,7 +87,7 @@ stat -c '%A %U:%G %n' /opt/claude /opt/claude/xcloud
 sudo -l -U xcloud
 
 {
-    echo "xcloud-firstboot $(date -Is) on $host, roles $roles — PUBLIC keys only"
+    echo "xcloud-firstboot $(date -Is) on $host, roles $roles, kit $kit_done — PUBLIC keys only"
     su - xcloud -c 'grep -h "public key" ~/.config/sops/age/keys.txt' 2>/dev/null
     cat /home/xcloud/.ssh/*.pub 2>/dev/null
 } > /root/xcloud-firstboot.txt

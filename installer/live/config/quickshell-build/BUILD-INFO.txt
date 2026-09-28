@@ -1,0 +1,40 @@
+quickshell: v0.3.1 = 1a4716cde794a59928d9d9fc15f2afc7a95de360 (https://git.outfoxxed.me/quickshell/quickshell.git)
+cpptrace (vendored, static): v1.0.4 = 3db8da80111171c219ab5839905771386bee06b3
+build root: debootstrap --variant=minbase trixie (2026-09-27), gcc 14.2.0, cmake 3.31.6, Qt 6.8.2
+SOURCE_DATE_EPOCH=1787279335
+
+== cmake feature summary ==
+--   Distributor: xcloud baldr (Debian trixie build)
+--   Disable precompild headers (dev): OFF
+--   Build tests (dev): OFF
+--   ASAN (dev): OFF
+--   Keep Frame Pointers (dev): OFF
+--   Use jemalloc: ON
+--   Crash Handling: ON
+--   Unix Sockets: ON
+--   Wayland: OFF
+--     Wlroots Layer-Shell: OFF (Requires WAYLAND)
+--     Session Lock: OFF (Requires WAYLAND)
+--     Foreign Toplevel Management: OFF (Requires WAYLAND)
+--     Hyprland: OFF (Requires WAYLAND)
+--       Hyprland IPC: OFF (Requires HYPRLAND)
+--       Hyprland Global Shortcuts: OFF (Requires HYPRLAND)
+--       Hyprland Focus Grabbing: OFF (Requires HYPRLAND)
+--       Hyprland Surface Extensions: OFF (Requires HYPRLAND)
+--     Screencopy: OFF (Requires WAYLAND)
+--       Image Copy Capture: OFF (Requires WAYLAND)
+--       Wlroots Screencopy: OFF (Requires WAYLAND)
+--       Hyprland Toplevel Export: OFF (Requires WAYLAND)
+--   X11: ON
+--   I3/Sway: ON
+--     I3/Sway IPC: ON
+--   System Tray: ON
+--   PipeWire: ON
+--   Mpris: ON
+--   Pam: ON
+--   Polkit: ON
+--   Greetd: ON
+--   UPower: ON
+--   Notifications: ON
+--   Bluetooth: ON
+--   Network: ON

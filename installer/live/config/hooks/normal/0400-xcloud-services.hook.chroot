@@ -1,8 +1,15 @@
 #!/bin/sh
 set -e
-systemctl enable lightdm.service
+# SDDM (ml4w theme, config/includes.chroot/etc/sddm.conf.d/10-xcloud.conf).
+# Its unit's Alias=display-manager.service keeps xcloud-firstboot's Before= working.
+echo 'sddm shared/default-x-display-manager select sddm' | debconf-set-selections
+echo /usr/bin/sddm > /etc/X11/default-display-manager
+systemctl enable sddm.service
+test "$(readlink -f /etc/systemd/system/display-manager.service)" = "$(readlink -f /usr/lib/systemd/system/sddm.service)"
 systemctl enable xcloud-firstboot.service
 systemctl enable ssh.service
+# Caps Lock: tap = "/", hold = [capslock] layer (/etc/keyd/default.conf, as on loki).
+systemctl enable keyd.service
 # Rootless Docker only (see run_once_setup-docker-rootless.sh in the dotfiles).
 systemctl mask docker.service docker.socket
 # zram swap, as on loki

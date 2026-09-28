@@ -51,6 +51,10 @@ fi
 log "OS disk: $disk; data disk: ${datadisk:-none}"
 
 db_set partman-auto/disk "$disk"
+# grub-installer otherwise picks the first disk (the data disk on thor). EFI
+# installs mostly ignore the device, but BIOS/CSM would write it there.
+db_set grub-installer/bootdev "$disk"
+db_fset grub-installer/bootdev seen true
 db_get partman-auto/expert_recipe
 db_set partman-auto/expert_recipe "$(echo "$RET" | sed "s|@DISK@|$disk|g")"
 exit 0

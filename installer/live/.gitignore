@@ -2,3 +2,4 @@
 /build/
 # Operator public key — input to build.sh, kept out of git
 /operator.pub
+/signer.pub
