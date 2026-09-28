@@ -2,6 +2,6 @@
     "bar": {
         "enabled": true,
         "alwaysExpanded": false,
-        "autohide": false
+        "autohide": true
     }
 }

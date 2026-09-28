@@ -13,13 +13,15 @@ import qs.StatusbarApp
 // StatusbarLoader for why); barExpanded/keyboard-nav/hover stay local to each
 // instance, since each monitor's bar should expand/collapse independently.
 //
-// X11/i3: this PanelWindow is an i3 dock client. i3 reserves the dock's
-// whole window height (it ignores the strut / exclusiveZone), so the window
-// is only as tall as the band the bar should reserve, and the autohide mode
-// (a bar floating over the windows without reserving space) cannot exist
-// here -- it is ignored. i3 never gives a dock client keyboard focus, so the
-// SUPER + ALT + SPACE keyboard navigation is reduced to toggling the
-// expanded state.
+// X11/i3: with autohide off this PanelWindow is an i3 dock client. i3
+// reserves the dock's whole window height (it ignores the strut /
+// exclusiveZone), so the window is only as tall as the band the bar should
+// reserve. Quickshell always types a PanelWindow as a dock, so with autohide
+// on the window is made override-redirect instead (see applyWindowType): i3
+// then doesn't manage it at all, reserves nothing, and the bar floats over
+// the windows like the Hyprland layer surface. i3 never gives a dock client
+// keyboard focus, so the SUPER + ALT + SPACE keyboard navigation is reduced
+// to toggling the expanded state.
 PanelWindow {
     id: root
 
@@ -63,10 +65,14 @@ PanelWindow {
 
     // Hide completely and reserve no space when disabled. `ready` holds the
     // window back until the settings files have been read (see above).
-    visible: barEnabled && ready
+    // `remapping` unmaps the window for a moment when autohide flips, so the
+    // new window type takes effect (see applyWindowType).
+    visible: barEnabled && ready && !remapping
     // Informational only on i3 (it reserves the whole window height anyway),
-    // but keeps _NET_WM_STRUT honest for anything else reading it.
+    // but keeps _NET_WM_STRUT honest for anything else reading it. An
+    // autohiding bar reserves nothing and sets no strut.
     exclusiveZone: dockHeight
+    exclusionMode: autohide ? ExclusionMode.Ignore : ExclusionMode.Normal
 
     // Keep the pill expanded regardless of hover. Set on the focused monitor's
     // instance via IPC ("qs ipc call statusbar focus", bound to SUPER + ALT + SPACE
@@ -82,6 +88,103 @@ PanelWindow {
     // is purely visual — unlike barExpanded it does not grab the keyboard — so
     // the left/right module areas remain permanently visible.
     readonly property bool alwaysExpanded: StatusbarSettings.alwaysExpanded
+
+    // --- AUTOHIDE ---
+    // When "autohide" is set in statusbar.json the bar slides up out of the
+    // screen and comes back only while the pointer is on it (or in the hot zone
+    // at the very top of the screen), while it is expanded for keyboard
+    // navigation (SUPER + ALT + SPACE), and while a tray menu or the power
+    // profile popup is open. A hiding bar reserves no space, so windows tile up
+    // to the screen edge. Toggled from the SidebarApp switch and via
+    // "qs ipc call statusbar autohideToggle" (SUPER + ALT + B).
+    readonly property bool autohide: StatusbarSettings.autohide
+
+    // Names of the i3 outputs whose visible workspace has a fullscreen window
+    // (set by StatusbarLoader, which watches i3 for them while autohiding).
+    property var fullscreenOutputs: []
+    // Matched by the screen's name (the RandR output name, which i3 uses
+    // too): I3.monitorFor() is evaluated once and stays null when it runs
+    // before the i3 IPC connection has reported the outputs.
+    readonly property bool coveredByFullscreen: autohide && !!screen
+        && fullscreenOutputs.indexOf(screen.name) >= 0
+
+    // An override-redirect window is stacked by nobody but itself, so an
+    // autohiding bar would stay above a fullscreen window (hot zone included).
+    // The Hyprland top layer sits under fullscreen windows; to match, the bar
+    // is lowered to the bottom of the stack while this output shows a
+    // fullscreen window and raised back on top afterwards. It stays mapped, so
+    // the OSD and popups anchored to it keep working over a fullscreen window.
+    function restack(): void {
+        let win = pill.Window.window
+        if (!win || !root.autohide)
+            return
+        if (root.coveredByFullscreen)
+            win.lower()
+        else
+            win.raise()
+    }
+
+    onCoveredByFullscreenChanged: restack()
+
+    // X11 window type. Quickshell maps every PanelWindow as a dock, and i3
+    // reserves a dock's full height, so an autohiding bar sets the
+    // override-redirect flag (Qt.BypassWindowManagerHint) on the backing
+    // window: i3 then leaves it alone -- no reserved space, no focus -- and it
+    // stays stacked above the tiled and floating windows. X only reads the flag
+    // when a window is mapped, so it is set as soon as the backing window
+    // exists (pill's Window.onWindowChanged, before the first map) and, when
+    // autohide flips at runtime, the window is unmapped and mapped again
+    // (`remapping`) to switch between dock and override-redirect without
+    // restarting i3 or the shell.
+    property bool remapping: false
+
+    function applyWindowType(win): void {
+        if (!win)
+            return
+        win.flags = root.autohide
+            ? (win.flags | Qt.BypassWindowManagerHint)
+            : (win.flags & ~Qt.BypassWindowManagerHint)
+    }
+
+    onAutohideChanged: {
+        root.remapping = true
+        applyWindowType(pill.Window.window)
+        Qt.callLater(() => {
+            root.remapping = false
+            root.restack()
+        })
+    }
+
+    // Slid into view when autohide is off, while the pointer is held on the bar,
+    // while the bar is expanded for keyboard navigation, and while a tray menu or
+    // the power profile popup is open (both live in the right area, which the
+    // reveal keeps on screen).
+    readonly property bool revealed: !autohide || root.pointerHeld
+        || root.barExpanded || root.trayMenuOpen || root.profileMenuOpen
+
+    // The pointer's hover, held for bar.hideDelay ms after it leaves. Without the
+    // grace period the bar snaps shut on every momentary gap in the hover:
+    // crossing from the hot zone down to the still-sliding pill, slipping between
+    // the pill and the screen edge, or brushing past the edge of the pill.
+    property bool pointerHeld: false
+
+    Timer {
+        id: hideDelay
+        interval: root.settings.bar.hideDelay
+        onTriggered: root.pointerHeld = false
+    }
+
+    HoverHandler {
+        id: barHover
+        onHoveredChanged: {
+            if (barHover.hovered) {
+                hideDelay.stop()
+                root.pointerHeld = true
+            } else {
+                hideDelay.restart()
+            }
+        }
+    }
 
     // React to the focus/expand/collapse IPC calls (routed via
     // StatusbarLoader's IpcHandler, since only one "statusbar" target can
@@ -307,18 +410,95 @@ PanelWindow {
 
     implicitHeight: dockHeight
 
+    // With autohide off there is no mask: the whole window takes pointer input,
+    // exactly as before (and, unlike on Wayland, a mask on X11 would also add a
+    // bounding shape to the dock). While autohiding only the pill and a full-width strip at the top of the
+    // screen do, so the rest of the band stays click-through and never swallows
+    // clicks meant for the windows behind it: hidden the strip is the hot zone
+    // that reveals the bar, revealed it bridges the gap above the pill. The strip
+    // has to keep taking input after the reveal, or the pointer that triggered it
+    // — still at the very top of the screen, and possibly nowhere near the pill
+    // horizontally — would land outside the input region and hide the bar right
+    // back again.
+    readonly property int hotZoneHeight: root.revealed
+        ? Math.max(3, Math.round(pill.y))
+        : 3
+
+    // Top edge of the pill, clamped to the window: while it is slid out its y is
+    // negative, and a region may not start above the window.
+    readonly property int pillTop: Math.max(0, Math.round(pill.y - root.shadowPad))
+
+    // On X11 the mask is the window's bounding shape (XShape), so it clips what
+    // is drawn as well as the input: while revealed the pill's region is grown
+    // by the shadow's reach so the drop shadow isn't cut off at the pill edge.
+    // Hidden it is not grown, so only the 3px sliver takes input.
+    readonly property int shadowPad: root.revealed ? 16 : 0
+
+    mask: root.autohide ? autohideMask : null
+
+    property Region autohideMask: Region {
+        // The pill. While it is slid out this shrinks to nothing and the hot
+        // zone below covers the sliver left at the screen edge.
+        Region {
+            x: Math.round(pill.x) - root.shadowPad
+            y: root.pillTop
+            width: Math.round(pill.width) + 2 * root.shadowPad
+            height: Math.max(0, Math.round(pill.y + pill.height) + root.shadowPad - root.pillTop)
+        }
+        Region {
+            x: 0
+            y: 0
+            width: root.width
+            height: root.hotZoneHeight
+        }
+    }
+
     // ==========================================
     // CENTERED PILL
     // ==========================================
     Item {
         id: pill
         anchors.horizontalCenter: parent.horizontalCenter
-        // Centered in the dock window (which is the reserved band on i3).
+        // Centered in the dock window (which is the reserved band on i3); the
+        // autohide slide is an extra offset on top of that.
         anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: revealShift
+
+        // Runs when the backing X11 window is created, before it is first
+        // mapped: the only point where the override-redirect flag can be set
+        // without a remap (see applyWindowType).
+        // The stacking is (re)applied once the window exists too, in case the
+        // fullscreen state was already known before it was created.
+        Window.onWindowChanged: {
+            root.applyWindowType(Window.window)
+            Qt.callLater(root.restack)
+        }
+
+        // Offset that leaves only a 3px sliver of the pill at the top of the
+        // screen, i.e. slid fully out of view.
+        readonly property real hiddenOffset:
+            3 - height - (root.implicitHeight - height) / 2
+
+        // The slide itself is animated as an extra shift rather than the whole
+        // offset, so a change of the bar/pill height still repositions the pill
+        // instantly instead of sliding it.
+        property real revealShift: root.revealed ? 0 : hiddenOffset
+
+        Behavior on revealShift {
+            NumberAnimation {
+                duration: root.settings.pill.animationDuration
+                easing.type: Easing.OutQuint
+            }
+        }
 
         // Collapsed = sized to content, Expanded = fixed width.
+        // While autohiding, the hover that reveals the bar also expands it: the
+        // pointer that triggers the reveal sits in the hot zone at the screen
+        // edge, above the pill, so hoverHandler alone would leave the bar slid in
+        // but collapsed until the pointer reached the pill itself.
         property bool expanded: hoverHandler.hovered || root.barExpanded
             || root.alwaysExpanded || root.trayMenuOpen || root.profileMenuOpen
+            || (root.autohide && root.pointerHeld)
         // 0 in the settings file means "hug the center content".
         property real collapsedWidth: root.settings.pill.collapsedWidth > 0
             ? root.settings.pill.collapsedWidth

@@ -168,8 +168,7 @@ bindsym $mod+shift+w exec --no-startup-id ~/.config/xcloud/scripts/xcloud-wallpa
 # SUPER+SHIFT+B restarts the whole Quickshell shell (same script as autostart)
 bindsym $mod+shift+b exec --no-startup-id $s/quickshell.sh
 bindsym $mod+ctrl+b exec --no-startup-id qs ipc call statusbar toggle
-# HYPR-ONLY SUPER+ALT+B statusbar autohide (an i3 dock always reserves its
-# full height, so a bar that floats over windows can't exist here)
+bindsym $mod+Mod1+b exec --no-startup-id qs ipc call statusbar autohideToggle
 # HYPR-ONLY SUPER+CTRL+D / SUPER+ALT+D dock toggle / autohide (no dock on i3)
 # HYPR-ONLY SUPER+SHIFT+A toggle animations; SUPER+ALT+G game mode
 # HYPR-ONLY SUPER+CTRL+T bar theme switcher; SUPER+SHIFT+M light/dark toggle; CTRL+ALT+T theme picker
