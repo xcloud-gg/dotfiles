@@ -13,6 +13,16 @@
 
 [config]
 
+# The fixed xcloud brand green. Templates use it for the accent roles (window
+# borders, tmux, Quickshell, rofi, ...) while everything else follows the
+# wallpaper. blend = false keeps it #00ff00 instead of harmonizing it toward
+# the wallpaper. matugen derives from it (dark mode):
+#   xcloud_source #00ff00 (the accent), on_xcloud_container #015000 (text on
+#   it), on_xcloud #013a00 -- the same values the Arch rice gets from its
+#   green-seeded palette (primary_container / on_primary_container).
+[config.custom_colors]
+xcloud = { color = "#00ff00", blend = false }
+
 # Read by the Quickshell shell (CustomTheme/Theme.qml) and nvim (matugen.nvim)
 [templates.colorsjson]
 input_path = '~/.config/matugen/templates/colors.json'

@@ -1,4 +1,6 @@
 {
+  "accent": "{{colors.xcloud_source.default.hex}}",
+  "on_accent": "{{colors.on_xcloud_container.default.hex}}",
   "background": "{{colors.background.default.hex}}",
   "error": "{{colors.error.default.hex}}",
   "error_container": "{{colors.error_container.default.hex}}",

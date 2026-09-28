@@ -1,9 +1,11 @@
+/* primary / on-primary are the fixed xcloud green (matugen custom colour
+   `xcloud`, ~/.config/matugen/config.toml); the rest follows the wallpaper. */
 * {
     background: {{colors.on_secondary.default.rgba | set_alpha: 0.7}};
-    primary: {{colors.primary.default.hex}};
+    primary: {{colors.xcloud_source.default.hex}};
     primary-fixed: {{colors.primary_fixed.default.hex}};
     primary-fixed-dim: {{colors.primary_fixed_dim.default.hex}};
-    on-primary: {{colors.on_primary.default.hex}};
+    on-primary: {{colors.on_xcloud_container.default.hex}};
     on-primary-fixed: {{colors.on_primary_fixed.default.hex}};
     on-primary-fixed-variant: {{colors.on_primary_fixed_variant.default.hex}};
     primary-container: {{colors.primary_container.default.hex}};

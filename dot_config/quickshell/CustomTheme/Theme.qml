@@ -9,6 +9,16 @@ QtObject {
     // Static properties
     readonly property string fontFamily: "Fira Sans Semibold"
     
+    // The shell's accent role, `primary`/`on_primary`, is the fixed xcloud
+    // green (colors.json "accent"/"on_accent", matugen custom colour `xcloud`)
+    // rather than the wallpaper's primary; colors.json's own "primary"/
+    // "on_primary" (still read by nvim) are skipped below so these bindings
+    // stay intact.
+    property color accent: "#00ff00"
+    property color on_accent: "#015000"
+    property color primary: accent
+    property color on_primary: on_accent
+
     // Dynamic color properties. Defaults are the shipped palette
     // (~/.config/xcloud/colors/colors.json) so nothing flashes a different
     // palette before that file has been read.
@@ -21,7 +31,6 @@ QtObject {
     property color on_background: "#e0e2e8"
     property color on_error: "#690005"
     property color on_error_container: "#ffdad6"
-    property color on_primary: "#003351"
     property color on_primary_container: "#00263f"
     property color on_primary_fixed: "#001d31"
     property color on_primary_fixed_variant: "#004b74"
@@ -37,7 +46,6 @@ QtObject {
     property color on_tertiary_fixed_variant: "#652f7b"
     property color outline: "#8a919b"
     property color outline_variant: "#404850"
-    property color primary: "#9cd0ff"
     property color primary_container: "#64b6f7"
     property color primary_fixed: "#cde5ff"
     property color primary_fixed_dim: "#93ccff"
@@ -77,7 +85,8 @@ QtObject {
                     try {
                         var newColors = JSON.parse(output);
                         for (var key in newColors) {
-                            if (root.hasOwnProperty(key) && key !== "objectName") {
+                            if (root.hasOwnProperty(key) && key !== "objectName"
+                                    && key !== "primary" && key !== "on_primary") {
                                 root[key] = newColors[key];
                             }
                         }

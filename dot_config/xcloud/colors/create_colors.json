@@ -1,4 +1,6 @@
 {
+  "accent": "#00ff00",
+  "on_accent": "#015000",
   "background": "#101418",
   "error": "#ffb4ab",
   "error_container": "#93000a",
