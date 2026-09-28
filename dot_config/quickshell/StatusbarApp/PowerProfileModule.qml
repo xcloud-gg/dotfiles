@@ -79,7 +79,7 @@ Rectangle {
         layer.enabled: true
         layer.effect: MultiEffect {
             colorization: 1.0
-            colorizationColor: profileRoot.active ? Theme.background : Theme.primary
+            colorizationColor: profileRoot.active ? Theme.background : Theme.on_surface
             Behavior on colorizationColor {
                 ColorAnimation { duration: 500; easing.type: Easing.OutQuint }
             }
@@ -195,7 +195,7 @@ Rectangle {
                             layer.enabled: true
                             layer.effect: MultiEffect {
                                 colorization: 1.0
-                                colorizationColor: (rowMouse.containsMouse || selected) ? Theme.background : Theme.primary
+                                colorizationColor: (rowMouse.containsMouse || selected) ? Theme.background : Theme.on_surface
                             }
                         }
 
@@ -203,7 +203,7 @@ Rectangle {
                             Layout.alignment: Qt.AlignVCenter
                             Layout.fillWidth: true
                             text: modelData.label
-                            color: (rowMouse.containsMouse || selected) ? Theme.background : Theme.primary
+                            color: (rowMouse.containsMouse || selected) ? Theme.background : Theme.on_surface
                             font.family: Theme.fontFamily
                             font.pixelSize: 14
                             font.bold: selected

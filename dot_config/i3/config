@@ -202,10 +202,12 @@ bindsym XF86AudioPlay exec --no-startup-id playerctl play-pause
 bindsym XF86AudioPrev exec --no-startup-id playerctl previous
 
 # ---- gaps / borders ----
-# Hyprland: gaps_in 10 (per window side -> 20 between windows), gaps_out 20.
-# i3: inner = between windows and to the screen edge, outer is added on top.
-gaps inner 20
-gaps outer 0
+# Hyprland (live, hyprland-gui.lua): gaps_in 5, gaps_out 15. gaps_in is per
+# window side, so two windows sit 2 x 5 = 10 px apart; gaps_out alone is the
+# window-to-screen-edge gap (15 px). i3: inner = between windows (10), and
+# the edge gap is inner + outer (i3 userguide, Gaps), so outer = 15 - 10 = 5.
+gaps inner 10
+gaps outer 5
 default_border pixel 2
 default_floating_border pixel 2
 smart_borders on

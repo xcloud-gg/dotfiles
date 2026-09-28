@@ -2,15 +2,24 @@ console_title_template = '{{ .Shell }} in {{ .Folder }}'
 version = 3
 final_space = true
 
+# Named colours (blue, red, yellow, cyan, darkGray) resolve through kitty's
+# matugen palette (colors-matugen.conf), so they follow the wallpaper. The
+# prompt character is the fixed xcloud green. grey is kitty's colour 8
+# (the palette's outline); upstream zen.toml defined grey here, the port had
+# lost it, so 'p:grey' pointed at nothing.
+[palette]
+  accent = '#00ff00'
+  grey = 'darkGray'
+
 [secondary_prompt]
   template = '❯❯ '
-  foreground = 'magenta'
+  foreground = 'p:accent'
   background = 'transparent'
 
 [transient_prompt]
   template = '❯ '
   background = 'transparent'
-  foreground_templates = ['{{if gt .Code 0}}red{{end}}', '{{if eq .Code 0}}magenta{{end}}']
+  foreground_templates = ['{{if gt .Code 0}}red{{end}}', '{{if eq .Code 0}}p:accent{{end}}']
 
 [[blocks]]
   type = 'prompt'
@@ -66,7 +75,7 @@ final_space = true
     background = 'transparent'
     type = 'text'
     style = 'plain'
-    foreground_templates = ['{{if gt .Code 0}}red{{end}}', '{{if eq .Code 0}}magenta{{end}}']
+    foreground_templates = ['{{if gt .Code 0}}red{{end}}', '{{if eq .Code 0}}p:accent{{end}}']
 
     [blocks.segments.properties]
       cache_duration = 'none'

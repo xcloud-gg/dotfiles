@@ -142,7 +142,7 @@ OverlayWindow {
                 id: searchField
                 Layout.fillWidth: true
                 placeholderText: "Search apps…"
-                color: Theme.primary
+                color: Theme.on_surface
                 font.pixelSize: 15
                 padding: 8
                 selectByMouse: true
@@ -210,7 +210,7 @@ OverlayWindow {
                         Layout.alignment: Qt.AlignVCenter
                         text: row.modelData.name
                         elide: Text.ElideRight
-                        color: index === root.selectedIndex ? Theme.background : Theme.primary
+                        color: index === root.selectedIndex ? Theme.background : Theme.on_surface
                         font.family: Theme.fontFamily
                         font.pixelSize: 14
                     }
@@ -231,7 +231,7 @@ OverlayWindow {
             Layout.alignment: Qt.AlignHCenter
             visible: root.filteredApps.length === 0
             text: "No matching apps"
-            color: Theme.primary
+            color: Theme.on_surface
             opacity: 0.6
             font.family: Theme.fontFamily
             font.pixelSize: 13

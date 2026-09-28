@@ -68,7 +68,7 @@ OverlayWindow {
             text: control.text
             font.family: Theme.fontFamily
             font.pixelSize: 14
-            color: control.highlighted ? Theme.background : Theme.primary
+            color: control.highlighted ? Theme.background : Theme.on_surface
             verticalAlignment: Text.AlignVCenter
         }
         background: Rectangle {
@@ -91,7 +91,7 @@ OverlayWindow {
             text: parent.text
             font.family: Theme.fontFamily
             font.pixelSize: 16
-            color: Theme.primary
+            color: Theme.on_surface
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             padding: 8
@@ -115,7 +115,7 @@ OverlayWindow {
                 implicitWidth: 22
                 implicitHeight: 22
                 radius: 11
-                color: parent.parent.checked ? Theme.background : Theme.on_primary
+                color: parent.parent.checked ? Theme.background : Theme.on_surface_variant
                 Behavior on x { NumberAnimation { duration: 150 } }
             }
         }
@@ -137,7 +137,7 @@ OverlayWindow {
                 layer.enabled: true
                 layer.effect: MultiEffect {
                     colorization: 1.0
-                    colorizationColor: Theme.primary
+                    colorizationColor: Theme.on_surface
                 }
             }
         }
@@ -155,7 +155,7 @@ OverlayWindow {
                 anchors.centerIn: parent
                 text: iconTxt
                 visible: iconSrc === ""
-                color: Theme.primary
+                color: Theme.on_surface
                 font.family: "monospace"
                 font.pixelSize: 18
                 verticalAlignment: Text.AlignVCenter
@@ -173,7 +173,7 @@ OverlayWindow {
                 layer.enabled: iconSrc !== ""
                 layer.effect: MultiEffect {
                     colorization: 1.0
-                    colorizationColor: Theme.primary
+                    colorizationColor: Theme.on_surface
                 }
             }
         }
@@ -282,7 +282,7 @@ OverlayWindow {
                                 layer.enabled: true
                                 layer.effect: MultiEffect {
                                     colorization: 1.0
-                                    colorizationColor: Theme.primary
+                                    colorizationColor: Theme.on_surface
                                 }
                             }
 
@@ -357,7 +357,7 @@ OverlayWindow {
                                 layer.enabled: true
                                 layer.effect: MultiEffect {
                                     colorization: 1.0
-                                    colorizationColor: Theme.primary
+                                    colorizationColor: Theme.on_surface
                                 }
                             }
 
@@ -417,7 +417,7 @@ OverlayWindow {
                         }
                     }
 
-                    Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.primary; opacity: 0.3; Layout.topMargin: 5; Layout.bottomMargin: 5 }
+                    Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.outline_variant; Layout.topMargin: 5; Layout.bottomMargin: 5 }
 
                     // --- MPRIS PLAYERS (Scrollable ListView) ---
                     ListView {
@@ -486,7 +486,7 @@ OverlayWindow {
                                         text: "󰝚" // Music note icon (fallback)
                                         font.family: "monospace"
                                         font.pixelSize: 32
-                                        color: Theme.primary
+                                        color: Theme.on_surface
                                         visible: !player.trackArtUrl || player.trackArtUrl === ""
                                     }
                                 }
@@ -500,7 +500,7 @@ OverlayWindow {
                                     Text {
                                         Layout.fillWidth: true
                                         text: player.trackTitle ? player.trackTitle : (player.identity ? player.identity : "No Media Playing")
-                                        color: Theme.primary
+                                        color: Theme.on_surface
                                         font.family: Theme.fontFamily
                                         font.pixelSize: 16
                                         font.bold: true
@@ -574,7 +574,7 @@ OverlayWindow {
                     // waybar here.
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { text: "Status Bar"; color: Theme.primary; font.family: Theme.fontFamily; font.pixelSize: 16 }
+                        Text { text: "Status Bar"; color: Theme.on_surface; font.family: Theme.fontFamily; font.pixelSize: 16 }
                         Item { Layout.fillWidth: true }
                         XCloudSwitch {
                             id: statusbarSwitch
@@ -627,7 +627,7 @@ OverlayWindow {
                     // --- STATUSBAR ALWAYS EXPANDED (Quickshell) ---
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { text: "Statusbar Expanded"; color: Theme.primary; font.family: Theme.fontFamily; font.pixelSize: 16 }
+                        Text { text: "Statusbar Expanded"; color: Theme.on_surface; font.family: Theme.fontFamily; font.pixelSize: 16 }
                         Item { Layout.fillWidth: true }
                         XCloudSwitch {
                             id: statusbarExpandedSwitch
@@ -667,7 +667,7 @@ OverlayWindow {
                     // script as the bar's lock button (i3/scripts/idle.sh).
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { text: "Auto Lock"; color: Theme.primary; font.family: Theme.fontFamily; font.pixelSize: 16 }
+                        Text { text: "Auto Lock"; color: Theme.on_surface; font.family: Theme.fontFamily; font.pixelSize: 16 }
                         Item { Layout.fillWidth: true }
                         XCloudSwitch {
                             id: idleSwitch
@@ -702,7 +702,7 @@ OverlayWindow {
                     // --- THEME ---
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { text: "Theme"; color: Theme.primary; font.family: Theme.fontFamily; font.pixelSize: 16 }
+                        Text { text: "Theme"; color: Theme.on_surface; font.family: Theme.fontFamily; font.pixelSize: 16 }
                         Item { Layout.fillWidth: true }
                         SettingsWheel {
                             onClicked: themeMenu.open()

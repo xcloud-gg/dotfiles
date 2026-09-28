@@ -1,2 +1,14 @@
 @import 'colors.css';
 
+/* Stock GTK3 Adwaita-dark has its colours compiled in and ignores the
+   @define-color names above, so the core surfaces and the selection are
+   restyled here (user CSS outranks the theme). */
+window, .background { background-color: @theme_bg_color; color: @theme_fg_color; }
+.view, textview text, iconview, treeview.view, list, row { background-color: @theme_base_color; color: @theme_text_color; }
+headerbar, .titlebar { background: @headerbar_bg_color; color: @headerbar_fg_color; }
+popover, menu, .menu, .context-menu { background-color: @popover_bg_color; color: @popover_fg_color; }
+selection, *:selected, *:selected:focus, row:selected, text selection, entry selection,
+textview text selection, treeview.view:selected {
+    background-color: @theme_selected_bg_color;
+    color: @theme_selected_fg_color;
+}

@@ -3,9 +3,11 @@
 * Generated with Matugen
 */
 
-@define-color accent_color {{colors.primary_fixed_dim.default.hex}};
-@define-color accent_fg_color {{colors.on_primary_fixed.default.hex}};
-@define-color accent_bg_color {{colors.primary_fixed_dim.default.hex}};
+/* libadwaita (GTK4) accent = the fixed xcloud green (matugen custom colour
+   `xcloud`); everything else follows the wallpaper. */
+@define-color accent_color {{colors.xcloud_source.default.hex}};
+@define-color accent_fg_color {{colors.on_xcloud_container.default.hex}};
+@define-color accent_bg_color {{colors.xcloud_source.default.hex}};
 @define-color window_bg_color {{colors.surface_dim.default.hex}};
 @define-color window_fg_color {{colors.on_surface.default.hex}};
 @define-color headerbar_bg_color {{colors.surface_dim.default.hex}};
@@ -20,3 +22,26 @@
 @define-color sidebar_fg_color @window_fg_color;
 @define-color sidebar_border_color @window_bg_color;
 @define-color sidebar_backdrop_color @window_bg_color;
+
+/* GTK3 names. Apps' own CSS and the rules in ~/.config/gtk-3.0/gtk.css use
+   these; stock GTK3 Adwaita compiles its colours in, so it doesn't. */
+@define-color theme_bg_color @window_bg_color;
+@define-color theme_fg_color @window_fg_color;
+@define-color theme_base_color @view_bg_color;
+@define-color theme_text_color @view_fg_color;
+@define-color theme_selected_bg_color @accent_bg_color;
+@define-color theme_selected_fg_color @accent_fg_color;
+@define-color theme_unfocused_bg_color @window_bg_color;
+@define-color theme_unfocused_fg_color @window_fg_color;
+@define-color theme_unfocused_base_color @view_bg_color;
+@define-color theme_unfocused_text_color @view_fg_color;
+@define-color theme_unfocused_selected_bg_color @accent_bg_color;
+@define-color theme_unfocused_selected_fg_color @accent_fg_color;
+@define-color insensitive_bg_color @window_bg_color;
+@define-color insensitive_fg_color {{colors.outline.default.hex}};
+@define-color insensitive_base_color @view_bg_color;
+@define-color borders {{colors.outline_variant.default.hex}};
+@define-color unfocused_borders {{colors.outline_variant.default.hex}};
+@define-color warning_color {{colors.tertiary.default.hex}};
+@define-color error_color {{colors.error.default.hex}};
+@define-color success_color {{colors.xcloud_source.default.hex}};

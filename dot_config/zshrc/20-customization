@@ -41,7 +41,8 @@ setopt appendhistory
 # -----------------------------------------------------
 # Prompt
 # -----------------------------------------------------
-# zen.toml uses named ANSI colors (blue/magenta/p:grey/...), not hex, so it
+# zen.toml uses named ANSI colors (blue/red/darkGray/...) plus the fixed
+# xcloud green for the prompt character, so it
 # already picks up live wallpaper-driven recoloring for free via kitty's own
 # matugen-generated palette (colors-matugen.conf) -- no separate matugen
 # template needed for this theme. The commented-out EDM115 alternative

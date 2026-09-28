@@ -78,7 +78,7 @@ Rectangle {
             layer.enabled: true
             layer.effect: MultiEffect {
                 colorization: 1.0
-                colorizationColor: battery.active ? Theme.background : Theme.primary
+                colorizationColor: battery.active ? Theme.background : Theme.on_surface
                 Behavior on colorizationColor {
                     ColorAnimation { duration: 500; easing.type: Easing.OutQuint }
                 }
@@ -88,7 +88,7 @@ Rectangle {
         Text {
             Layout.alignment: Qt.AlignVCenter
             text: battery.shownPercent + "%"
-            color: battery.active ? Theme.background : Theme.primary
+            color: battery.active ? Theme.background : Theme.on_surface
             font.family: Theme.fontFamily
             font.pixelSize: 14
             font.bold: true

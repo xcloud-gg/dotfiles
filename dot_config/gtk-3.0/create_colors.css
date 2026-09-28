@@ -3,9 +3,11 @@
 * Generated with Matugen
 */
 
-@define-color accent_color #93ccff;
-@define-color accent_fg_color #001d31;
-@define-color accent_bg_color #93ccff;
+/* libadwaita (GTK4) accent = the fixed xcloud green (matugen custom colour
+   `xcloud`); everything else follows the wallpaper. */
+@define-color accent_color #00ff00;
+@define-color accent_fg_color #015000;
+@define-color accent_bg_color #00ff00;
 @define-color window_bg_color #101418;
 @define-color window_fg_color #e0e2e8;
 @define-color headerbar_bg_color #101418;
@@ -20,3 +22,26 @@
 @define-color sidebar_fg_color @window_fg_color;
 @define-color sidebar_border_color @window_bg_color;
 @define-color sidebar_backdrop_color @window_bg_color;
+
+/* GTK3 names. Apps' own CSS and the rules in ~/.config/gtk-3.0/gtk.css use
+   these; stock GTK3 Adwaita compiles its colours in, so it doesn't. */
+@define-color theme_bg_color @window_bg_color;
+@define-color theme_fg_color @window_fg_color;
+@define-color theme_base_color @view_bg_color;
+@define-color theme_text_color @view_fg_color;
+@define-color theme_selected_bg_color @accent_bg_color;
+@define-color theme_selected_fg_color @accent_fg_color;
+@define-color theme_unfocused_bg_color @window_bg_color;
+@define-color theme_unfocused_fg_color @window_fg_color;
+@define-color theme_unfocused_base_color @view_bg_color;
+@define-color theme_unfocused_text_color @view_fg_color;
+@define-color theme_unfocused_selected_bg_color @accent_bg_color;
+@define-color theme_unfocused_selected_fg_color @accent_fg_color;
+@define-color insensitive_bg_color @window_bg_color;
+@define-color insensitive_fg_color #8a919b;
+@define-color insensitive_base_color @view_bg_color;
+@define-color borders #404850;
+@define-color unfocused_borders #404850;
+@define-color warning_color #eeb7ff;
+@define-color error_color #ffb4ab;
+@define-color success_color #00ff00;

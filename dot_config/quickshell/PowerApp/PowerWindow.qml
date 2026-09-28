@@ -182,7 +182,7 @@ OverlayWindow {
                     layer.enabled: true
                     layer.effect: MultiEffect {
                         colorization: 1.0
-                        colorizationColor: (mouseArea.containsMouse || btn.selected) ? Theme.background : Theme.primary
+                        colorizationColor: (mouseArea.containsMouse || btn.selected) ? Theme.background : Theme.on_surface
                     }
                 }
 

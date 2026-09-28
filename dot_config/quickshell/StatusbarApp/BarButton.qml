@@ -43,7 +43,7 @@ Rectangle {
         layer.enabled: btn.colorize
         layer.effect: MultiEffect {
             colorization: 1.0
-            colorizationColor: btn.active ? Theme.background : Theme.primary
+            colorizationColor: btn.active ? Theme.background : Theme.on_surface
 
             // Recolor the icon in step with the circle fade.
             Behavior on colorizationColor {

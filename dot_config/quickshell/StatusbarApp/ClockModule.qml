@@ -75,7 +75,7 @@ Item {
             NumberAnimation { duration: 250; easing.type: Easing.OutQuint }
         }
         text: Qt.formatDateTime(clock.date, clockRoot.timeFormat)
-        color: Theme.primary
+        color: Theme.on_surface
         font.family: Theme.fontFamily
         font.pixelSize: 16
         font.bold: true
@@ -87,7 +87,7 @@ Item {
         anchors.top: timeText.bottom
         anchors.topMargin: 1
         text: Qt.formatDateTime(clock.date, clockRoot.dateFormat)
-        color: Theme.primary
+        color: Theme.on_surface
         font.family: Theme.fontFamily
         font.pixelSize: 11
 

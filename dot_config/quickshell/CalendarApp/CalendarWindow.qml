@@ -85,7 +85,7 @@ OverlayWindow {
                 anchors.centerIn: parent
                 text: iconTxt
                 visible: iconSrc === ""
-                color: Theme.primary
+                color: Theme.on_surface
                 font.family: "monospace"
                 font.pixelSize: 18
                 verticalAlignment: Text.AlignVCenter
@@ -103,7 +103,7 @@ OverlayWindow {
                 layer.enabled: iconSrc !== ""
                 layer.effect: MultiEffect {
                     colorization: 1.0
-                    colorizationColor: Theme.primary
+                    colorizationColor: Theme.on_surface
                 }
             }
         }
@@ -121,7 +121,7 @@ OverlayWindow {
             text: parent.text
             font.family: Theme.fontFamily
             font.pixelSize: 12
-            color: Theme.primary
+            color: Theme.on_surface
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             padding: 4
@@ -261,7 +261,7 @@ OverlayWindow {
                     Text {
                         Layout.preferredWidth: 120 
                         text: monthNames[currentMonth] + " " + currentYear
-                        color: Theme.primary
+                        color: Theme.on_surface
                         font.family: Theme.fontFamily
                         font.pixelSize: 18
                         font.bold: true
@@ -297,7 +297,7 @@ OverlayWindow {
                 }
             }
 
-            Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.primary; opacity: 0.3 }
+            Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.outline_variant }
 
             // --- CALENDAR BODY ---
             RowLayout {
@@ -327,7 +327,7 @@ OverlayWindow {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             text: model.weekNumber
-                            color: Theme.primary
+                            color: Theme.on_surface
                             opacity: 0.7
                             font.family: Theme.fontFamily
                             font.pixelSize: 13
@@ -337,7 +337,7 @@ OverlayWindow {
                     }
                 }
 
-                Rectangle { Layout.fillHeight: true; implicitWidth: 1; color: Theme.primary; opacity: 0.3 }
+                Rectangle { Layout.fillHeight: true; implicitWidth: 1; color: Theme.outline_variant }
 
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -351,7 +351,7 @@ OverlayWindow {
                             Text {
                                 Layout.fillWidth: true
                                 text: modelData
-                                color: Theme.primary
+                                color: Theme.on_surface
                                 font.family: Theme.fontFamily
                                 font.pixelSize: 14
                                 font.bold: true

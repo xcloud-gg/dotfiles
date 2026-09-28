@@ -157,7 +157,7 @@ PopupWindow {
                     layer.enabled: true
                     layer.effect: MultiEffect {
                         colorization: 1.0
-                        colorizationColor: Theme.primary
+                        colorizationColor: Theme.on_surface
                     }
                 }
 
@@ -166,7 +166,7 @@ PopupWindow {
                     visible: root.kind === "mic"
                     text: root.muted ? "🔇" : "🎤"
                     font.pixelSize: 16
-                    color: Theme.primary
+                    color: Theme.on_surface
                 }
             }
 
