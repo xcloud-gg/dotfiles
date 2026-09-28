@@ -50,6 +50,12 @@ esac
 # without an ISO rebuild. It needs the operator's signing key baked in at build time (live/signer.pub),
 # the network, a GitHub device login, and a published kit-* tag; otherwise, or if it fails, fall back
 # to the kit baked into this ISO. Both paths run bootstrap-host.sh, which also sets xcloud's password.
+# Re-runs: bootstrap-host.sh makes its audit log append-only (chattr +a) and
+# then chowns it on every run, which fails on the append-only file ("Operation
+# not permitted") and stops a second attempt (seen on thor). Clear the flag;
+# bootstrap sets it again.
+chattr -a /var/log/claude/xcloud-audit.log 2>/dev/null || true
+
 SIGNER=/usr/local/share/xcloud/signer.pub
 AGENTHOST=/usr/local/share/xcloud/dotfiles-bootstrap/bootstrap/agent-host.sh
 kit_done=""
