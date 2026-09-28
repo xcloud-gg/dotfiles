@@ -12,12 +12,12 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 WORK=$HERE/build
 BUILDER=$WORK/builder              # Debian trixie chroot that runs live-build
 TREE=$BUILDER/build                # the live-build working tree (auto/ + config/)
-KIT=/opt/claude/xcloud/xcloud-agent-kit.tar.gz
+KIT=${XCLOUD_KIT:-/opt/claude/xcloud/xcloud-agent-kit.tar.gz}   # override to build elsewhere
 OPKEY=$HERE/operator.pub           # marius's PUBLIC key -> bootstrap-host.sh --operator-key
 SIGNER=$HERE/signer.pub           # optional: operator's git SIGNING public key -> firstboot verifies kit-* tags with it
 MIRROR=http://deb.debian.org/debian
 
-[[ $EUID -eq 0 ]] || exec sudo "$0" "$@"
+[[ $EUID -eq 0 ]] || exec sudo --preserve-env=XCLOUD_KIT,XCLOUD_MKSQUASHFS_OPTIONS "$0" "$@"
 
 avail=$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo)
 echo "MemAvailable: ${avail} MiB"
@@ -71,7 +71,7 @@ chmod +x "$TREE"/auto/* "$TREE"/config/hooks/normal/*.hook.chroot
 echo "--- lb build ---"
 # mksquashfs is the RAM hog; loki has ~1-2 GiB headroom (see /opt/claude/CLAUDE.md).
 chroot "$BUILDER" /usr/bin/env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-    MKSQUASHFS_OPTIONS="-processors 2 -mem 1G" \
+    MKSQUASHFS_OPTIONS="${XCLOUD_MKSQUASHFS_OPTIONS:--processors 2 -mem 1G}" \
     /bin/sh -c 'cd /build && lb clean && lb config && lb build' 2>&1 | tee "$WORK/build.log"
 [[ ${PIPESTATUS[0]} -eq 0 ]] || { echo "FATAL: lb build failed — see $WORK/build.log" >&2; exit 1; }
 

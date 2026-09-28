@@ -48,11 +48,14 @@ mkdir -p "$BTRFS_MNT"
 # top-level volume, then reshape here before first boot.
 # ---------------------------------------------------------------------------
 echo "--- unmounting /target tree for reshape ---"
-umount /target/boot/efi 2>/dev/null || true
-umount /target/boot 2>/dev/null || true
-umount /target/dev 2>/dev/null || true
-umount /target/proc 2>/dev/null || true
-umount /target/sys 2>/dev/null || true
+# Whatever d-i has mounted below /target, deepest first. Booted through Ventoy,
+# the install medium is still mounted at /target/media/cdrom at this point
+# (a direct ISO boot has it unmounted already), which made `umount /target`
+# fail with "busy" (seen in a libvirt test through a Ventoy disk image).
+MEDIA_SRC=$(awk '$2=="/target/media/cdrom"{print $1; exit}' /proc/mounts)
+for m in $(awk '$2 ~ "^/target/" {print $2}' /proc/mounts | sort -r); do
+    umount "$m" 2>/dev/null || umount -l "$m"
+done
 umount /target
 
 echo "--- mounting top-level subvolume (id 5) ---"
@@ -111,6 +114,12 @@ mount -o "subvol=@srv,nodatacow,ssd,discard=async,noatime" "$ROOT_DEV" /target/s
 mount --bind /dev /target/dev
 mount --bind /proc /target/proc
 mount --bind /sys /target/sys
+# Put the install medium back where d-i had it: finish-install's
+# load-install-cd / apt-cdrom still read it after this script.
+if [ -n "$MEDIA_SRC" ]; then
+    mkdir -p /target/media/cdrom
+    mount -o ro "$MEDIA_SRC" /target/media/cdrom || echo "WARN: could not remount $MEDIA_SRC on /target/media/cdrom"
+fi
 
 echo "--- rewriting /etc/fstab with real UUIDs ---"
 root_uuid=$(blkid -s UUID -o value "$ROOT_DEV")
