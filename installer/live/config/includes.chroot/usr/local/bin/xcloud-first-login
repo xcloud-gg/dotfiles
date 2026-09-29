@@ -1,8 +1,0 @@
-#!/bin/sh
-# Runs once per user, inside a real systemd --user session, so chezmoi's
-# run_once scripts (notably rootless Docker) can do what the build chroot couldn't.
-set -eu
-command -v chezmoi >/dev/null && [ -d "$HOME/.local/share/chezmoi" ] || exit 0
-chezmoi apply --include=scripts
-mkdir -p "$HOME/.local/state/xcloud"
-touch "$HOME/.local/state/xcloud/first-login.done"

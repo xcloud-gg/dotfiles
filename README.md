@@ -85,7 +85,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/xcloud-gg/dotfiles/main/inst
 |---|---|---|
 | `dotfiles` (default) | any Debian 13 / Arch desktop user | installs chezmoi, clones this repo, `chezmoi init --apply` (re-run to update) |
 | `operator` | the operator workstation — loki now, thor once built | gh + Claude Code; `~/xcloud/xcloud-docs` and `~/xcloud/xcloud-state`, kept current by `xcloud-sync` (docs `main` only across commits signed by your pinned key); `xcloud-approve` on `PATH`; the operator Claude workspace `~/xcloud/operator` whose SessionStart hook loads the build state (revisions, proposals waiting for your signature, every agent's phase, hand-offs to you). Never applies the i3 rice, never touches private keys |
-| `agent-host` | an agent host **not** installed from the live ISO | fetches the kit from a signed `kit-*` tag of `xc0-sh/xcloud-docs`, verifies it against the signer fingerprint you type, runs `bootstrap-host.sh`, optionally registers the host's deploy keys; hosts installed from `installer/live/` get this at first boot instead |
+| `agent-host` | an agent host **not** installed from the live ISO | fetches the kit from a signed `kit-*` tag of `xc0-sh/xcloud-docs`, verifies it against the signer fingerprint you type, runs `bootstrap-host.sh`, optionally registers the host's deploy keys; hosts installed from the live ISO ([`xc0-sh/baldr`](https://github.com/xc0-sh/baldr)) get this at first boot instead |
 
 Everything runs from `main()` at the end of each script, so a truncated download runs nothing. For anything
 that matters pin a commit: `…/dotfiles/<commit>/install.sh` plus `--ref <commit>`. `install.sh`, `bootstrap/`
