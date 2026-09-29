@@ -16,3 +16,4 @@ systemctl mask docker.service docker.socket
 printf 'ALGO=zstd\nPERCENT=50\n' > /etc/default/zramswap
 systemctl enable zramswap.service
 systemctl --global enable xcloud-first-login.service
+systemctl --global enable xcloud-orchestrator-autostart.service

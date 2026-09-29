@@ -1,0 +1,10 @@
+[Unit]
+Description=xCloud: start the orchestrator (xcloud) tmux session on login
+ConditionUser=!root
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/xcloud-orchestrator-autostart
+
+[Install]
+WantedBy=default.target
