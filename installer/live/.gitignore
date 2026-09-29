@@ -1,5 +1,0 @@
-# Build output and the builder chroot (see build.sh)
-/build/
-# Operator public key — input to build.sh, kept out of git
-/operator.pub
-/signer.pub

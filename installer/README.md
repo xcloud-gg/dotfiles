@@ -1,6 +1,11 @@
 # installer/
 
-The Debian preseed that turns a bare disk into this rice, running on Ventoy's
+**`live/` moved to its own repo: https://github.com/xc0-sh/baldr** — that's now
+the canonical home for the live/installer ISO project (live-build config,
+firstboot, "Install – thor" d-i entries, SDDM/Quickshell). `live/` here is just
+a pointer now.
+
+The rest of this directory is the Debian preseed that turns a bare disk into this rice, running on Ventoy's
 `auto_install` plugin against the **stock, unmodified** Debian 13 netinst ISO
 (deliberately not a repacked ISO — see the project history for why).
 
