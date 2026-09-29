@@ -1,0 +1,10 @@
+#!/bin/sh
+# Starts the orchestrator's tmux session on every graphical login, on hosts that have the
+# orchestrator role (workspace /opt/claude/xcloud/orchestrator present, e.g. thor). Idempotent:
+# xcloud-agent start refuses (and this then no-ops) if the session already runs. If Claude Code
+# has not been signed in yet, the tmux window still starts and shows the login prompt there for
+# the operator to complete on next attach — sign-in itself needs a browser and can't be automated.
+set -eu
+[ -d /opt/claude/xcloud/orchestrator ] || exit 0
+command -v xcloud-agent >/dev/null 2>&1 || exit 0
+xcloud-agent start orchestrator >/dev/null 2>&1 || true

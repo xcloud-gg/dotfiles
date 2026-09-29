@@ -34,7 +34,7 @@ until passwd marius; do echo "try again"; done
 
 host=$(hostname -s)
 case "$host" in
-    thor) roles=platform,aios-thor ;;
+    thor) roles=platform,aios-thor,orchestrator ;;
     *)    roles=aios-debian ;;
 esac
 echo; echo "Hostname '$host' -> agent-kit roles: $roles"
@@ -90,6 +90,7 @@ echo "--- checks ---"
 visudo -c || fail "visudo -c"
 id -nG marius | grep -qwE 'aios|docker' && fail "marius is in aios/docker (aiOS invariant 12)"
 stat -c '%A %U:%G %n' /opt/claude /opt/claude/xcloud
+[ -d /opt/claude/xcloud/orchestrator ] && stat -c '%A %U:%G %n' /opt/claude/xcloud/orchestrator /opt/claude/xcloud/orchestrator/.claude
 sudo -l -U xcloud
 
 {

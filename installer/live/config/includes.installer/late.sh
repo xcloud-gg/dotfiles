@@ -152,6 +152,14 @@ echo "    already auto-detects 4K-native disks, so it's not set here) ---"
 # trixie writes "luks,discard,x-initrd.attach", so match " luks," as well as a bare " luks".
 sed -i -e 's/ luks,/ luks,no-read-workqueue,no-write-workqueue,/' \
        -e 's/ luks$/ luks,discard,no-read-workqueue,no-write-workqueue/' /target/etc/crypttab 2>/dev/null || true
+
+# d-i names the mapper after the kernel device name it saw during install
+# (e.g. nvme1n1p3_crypt) — NVMe enumeration order isn't guaranteed stable
+# across boots, so that name can mismatch the partition it actually maps
+# after a reboot (seen on thor: named nvme1n1p3_crypt while mapping
+# nvme0n1p3). Give it a fixed name instead; update-initramfs/update-grub
+# below regenerate the early-boot cmdline from the renamed crypttab entry.
+sed -i '0,/^[^#[:space:]]/{s/^[^[:space:]]\+/xcloud_root_crypt/}' /target/etc/crypttab 2>/dev/null || true
 cat /target/etc/crypttab 2>/dev/null || echo "(no /etc/crypttab found — unexpected for an encrypted install, check manually)"
 
 echo "--- apt sources: live-installer leaves only the cdrom: line, so write the mirror ---"
