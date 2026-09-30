@@ -1,6 +1,6 @@
 # installer/
 
-**`live/` moved to its own repo: https://github.com/xc0-sh/baldr** — that's now
+**`live/` moved to its own repo: https://github.com/xc0-sh/fenrir** — that's now
 the canonical home for the live/installer ISO project (live-build config,
 firstboot, "Install – thor" d-i entries, SDDM/Quickshell). `live/` here is just
 a pointer now.
@@ -34,9 +34,3 @@ user — nothing more. aiOS itself is built afterward by a separate Claude Code
 agent (`aios-thor-agent`/`aios-baldr-agent`/`aios-portable-agent`, run via
 `bootstrap-host.sh`), which has its own explicit boundary against touching the
 desktop user's home, dotfiles, or window manager.
-
-## The live ISO moved
-
-The Debian 13 live ISO that used to live in `installer/live/` is now its own repository,
-[`xc0-sh/fenrir`](https://github.com/xc0-sh/fenrir) (aiOS Portable Spec §4, §22). Its history is kept there;
-this directory keeps only the stock-netinst preseed path (Ventoy `auto_install`).
