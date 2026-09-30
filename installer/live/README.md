@@ -1,10 +1,10 @@
-# Moved — this is now `xc0-sh/baldr`
+# Moved — this is now `xc0-sh/fenrir`
 
 The Debian 13 + X11 + i3 live/installer ISO (live-build config, firstboot,
 "Install – thor" / "Install – single internal disk" d-i entries, SDDM/Quickshell
 look & feel) moved to its own repo:
 
-**https://github.com/xc0-sh/baldr**
+**https://github.com/xc0-sh/fenrir**
 
 That repo is now the canonical source. Build it there (`build.sh` -> `build/xcloud-live-amd64.iso`);
 it still applies this repo's dotfiles (`xcloud-gg/dotfiles`) to `marius` and `xcloud` at build/firstboot

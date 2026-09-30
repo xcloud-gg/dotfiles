@@ -31,6 +31,12 @@ and GRUB's config from scratch.
 Provision the actual aiOS platform. This gets a Debian/X11/i3 desktop with
 drivers, default software, and this repo's dotfiles applied for the desktop
 user — nothing more. aiOS itself is built afterward by a separate Claude Code
-agent (`aios-thor-agent`/`aios-debian-agent`/`aios-portable-agent`, run via
+agent (`aios-thor-agent`/`aios-baldr-agent`/`aios-portable-agent`, run via
 `bootstrap-host.sh`), which has its own explicit boundary against touching the
 desktop user's home, dotfiles, or window manager.
+
+## The live ISO moved
+
+The Debian 13 live ISO that used to live in `installer/live/` is now its own repository,
+[`xc0-sh/fenrir`](https://github.com/xc0-sh/fenrir) (aiOS Portable Spec §4, §22). Its history is kept there;
+this directory keeps only the stock-netinst preseed path (Ventoy `auto_install`).

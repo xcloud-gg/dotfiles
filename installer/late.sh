@@ -4,7 +4,7 @@
 # Fetched by preseed.cfg's late_command, pinned to a commit so a later push to
 # this repo can't silently change what an in-progress install runs.
 #
-# NOT YET BOOT-TESTED (see /opt/claude/baldr/CHANGELOG.md) — the Btrfs subvolume
+# NOT YET BOOT-TESTED — the Btrfs subvolume
 # reshape in particular is the riskiest part of this whole installer. Test in
 # QEMU before pointing this at real hardware. If something below fails, `set -e`
 # stops the script and d-i shows a red "late_command failed" dialog rather than

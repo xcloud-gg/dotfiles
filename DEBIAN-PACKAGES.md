@@ -139,7 +139,7 @@ nvidia-cuda-dev nvidia-container-toolkit
   background.
 - `fastfetch`, `atuin` — both are in trixie after all (listed above).
 - `oh-my-posh` — upstream static binary to `/usr/local/bin`, checksum-verified
-  (live ISO: `xc0-sh/baldr` hook 0050).
+  (live ISO: `xc0-sh/fenrir` hook 0050).
 - oh-my-zsh plus the custom plugins `zsh-autosuggestions`,
   `zsh-syntax-highlighting` and `fast-syntax-highlighting` — git checkouts at
-  pinned commits in `~/.oh-my-zsh` (live ISO: `xc0-sh/baldr` hook 0250).
+  pinned commits in `~/.oh-my-zsh` (live ISO: `xc0-sh/fenrir` hook 0250).

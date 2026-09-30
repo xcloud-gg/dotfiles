@@ -1,6 +1,6 @@
 # xcloud-gg/dotfiles
 
-The Debian / X11 / i3 rice for **Baldr** and `thor` — the portable-hardware
+The Debian / X11 / i3 rice for `fenrir` (the portable live ISO), `baldr` (the operator laptop) and `thor` — the portable-hardware
 counterpart to the Hyprland/Wayland rice at
 [`xc0sh/dotfiles`](https://github.com/xc0sh/dotfiles), whose theme (colors, fonts,
 cursor) this repo matches. Managed with [chezmoi](https://chezmoi.io): every
@@ -103,7 +103,7 @@ in a VM before using this on real hardware.
 ## Status
 
 Initial draft, authored 2026-09-27 to seed this repo (per aiOS Portable Spec v0.2
-OD-P4) — not yet applied/tested on real hardware. The Baldr spec's own design keeps
+OD-P4) — not yet applied/tested on real hardware. The Portable spec's own design keeps
 automated build agents from authoring the operator's dotfiles content going forward;
 this first pass exists because the operator asked for it directly, not as a
 precedent for agents editing it later. Review before relying on it, and expect to

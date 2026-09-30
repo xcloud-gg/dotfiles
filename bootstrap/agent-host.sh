@@ -36,7 +36,7 @@ done
 [[ $EUID -eq 0 ]] || die "run as root (install.sh re-runs this mode through sudo)"
 [[ -f $OPKEY ]] && ssh-keygen -lf "$OPKEY" &>/dev/null || die "--operator-key must be a public key file"
 if [[ -z $ROLES ]]; then
-  case $(hostname -s) in thor) ROLES=platform,aios-thor ;; odin) ROLES=aios-core ;; baldr) ROLES=aios-portable ;; *) ROLES=aios-debian ;; esac
+  case $(hostname -s) in thor) ROLES=platform,aios-thor ;; odin) ROLES=aios-core ;; fenrir) ROLES=aios-portable ;; *) ROLES=aios-debian ;; esac
   [[ -f /etc/arch-release ]] && ROLES=aios-arch
   echo "roles from hostname $(hostname -s): $ROLES"; ask "Use these roles?" || die "give --roles"
 fi

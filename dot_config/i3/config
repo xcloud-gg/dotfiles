@@ -1,4 +1,4 @@
-# xCloud i3 config — Baldr/Debian X11 rice
+# xCloud i3 config — Debian X11 rice (fenrir, baldr, thor)
 # Same palette/fonts as the xcloud Hyprland rice: colours are generated from
 # the wallpaper by matugen (xcloud-wallpaper / waypaper) into colors.conf;
 # the shipped one is rendered from the default forest2.jpg.
